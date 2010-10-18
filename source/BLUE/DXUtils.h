@@ -24,6 +24,8 @@ namespace BLUE
 		}                                                      \
 	}
 #endif
+#else
+#define HR(x) { x; }
 #endif
 
 #define SAFE_DX_RELEASE(x) {if(x) { x->Release(); x = NULL;}}
