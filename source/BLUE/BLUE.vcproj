@@ -170,14 +170,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Object.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Object.h"
-				>
-			</File>
-			<File
 				RelativePath=".\stdafx.h"
 				>
 			</File>
@@ -274,6 +266,34 @@
 					>
 				</File>
 			</Filter>
+		</Filter>
+		<Filter
+			Name="Objects"
+			>
+			<File
+				RelativePath=".\MeshObject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\MeshObject.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Object.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Object.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PointObject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PointObject.h"
+				>
+			</File>
 		</Filter>
 	</Files>
 	<Globals>
