@@ -13,8 +13,6 @@
 
 //#include "Physics.h"
 
-#define MAX_PATH 256
-
 namespace BLUE
 {
 
