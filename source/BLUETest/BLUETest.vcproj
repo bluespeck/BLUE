@@ -59,7 +59,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="BLUE_d.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_d.exe"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
+				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
 				TargetMachine="1"
 			/>
@@ -129,7 +129,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="BLUE.lib"
-				AdditionalLibraryDirectories="&quot;$(OutDir)&quot;"
+				AdditionalLibraryDirectories="$(OutDir)"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
