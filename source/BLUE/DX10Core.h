@@ -46,6 +46,8 @@ protected:
 	
 	void OutputEngineInfo();
 
+	void DrawCoordAxes();
+
 protected:
 	IDXGISwapChain			*m_pSwapChain;
 	ID3D10Device1			*m_pDevice;

@@ -13,7 +13,7 @@
 
 //#include "Physics.h"
 
-#define MAX_PATH 256
+//#define MAX_PATH 256
 
 namespace BLUE
 {
@@ -24,14 +24,6 @@ public:
 	CObject( void ); 	
 	virtual ~CObject( void );
 	
-	CObject *m_pParent;
-	CObject *m_pChild;
-	CObject *m_pNextBrother;
-
-	CMatrix4 m_matGlobal, m_matLocal;
-	CVector3 m_vecScaleFactors;	// model scale factors
-	std::vector< IController *> m_pControllers;	
-
 	//CPhysics *m_pPhysics;	// Physics module [optional]
 
 	void GetGlobalPosition( CVector3 &vecPos );
@@ -45,11 +37,21 @@ public:
 	virtual void DeleteMe();
 	virtual void DeleteHierarchy();
 	
+	const TCHAR *GetName();
 	void SetName(const TCHAR *s);
 
 	void AddChild(CObject *pObj);
 
 	CObject *GetRootObj();
+
+public:
+	CObject *m_pParent;
+	CObject *m_pChild;
+	CObject *m_pNextBrother;
+
+	CMatrix4 m_matGlobal, m_matLocal;
+	CVector3 m_vecScaleFactors;	// model scale factors
+	std::vector< IController *> m_pControllers;	
 
 protected:
 	static unsigned long m_objCount;

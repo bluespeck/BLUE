@@ -1,0 +1,1 @@
+define BLUE_DX10 or BLUE_DX11 if you want to use DirectX as the underlaying API
