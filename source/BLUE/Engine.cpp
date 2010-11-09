@@ -185,7 +185,7 @@ CObject *CEngine::LoadMeshObjectFromFile(const TCHAR *path)
 #ifdef UNICODE
 	char szPath[MAX_PATH]={0};
 	wcstombs(szPath, path, MAX_PATH);
-	szPath[MAX_PATH] = 0;
+	szPath[MAX_PATH - 1] = 0;
 	pScene = aiImportFile(szPath, aiProcessPreset_TargetRealtime_Quality);
 #else
 	pScene = aiImportFile(path, aiProcessPreset_TargetRealtime_Quality);

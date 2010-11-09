@@ -22,6 +22,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	}
 	
 	pAppWindow->Bind3DEngine( pEngine );
+	pEngine->LoadObjectFromFile(L"myObj", NULL, BLUE::CEngine::OT_MESH, L"D:\\test\\models\\OBJ\\spider.obj");
 
 	MSG msg = { 0 };
 	while( msg.message != WM_QUIT )
