@@ -50,6 +50,11 @@ CDX10Core::CDX10Core()
 	m_pSwapChain				= NULL;	
 	m_pRenderTargetView			= NULL;	
 	m_pDepthStencilView			= NULL;	
+	
+	m_pBasicEffect						= NULL;
+	m_pWorldMatrixEffectVariable		= NULL;
+	m_pProjectionMatrixEffectVariable	= NULL;
+	m_pViewMatrixEffectVariable			= NULL;
 }
 
 CDX10Core::~CDX10Core( void )
@@ -67,6 +72,8 @@ void CDX10Core::CleanupDevice()
 
 	SAFE_DX_RELEASE( m_pSwapChain )			
 	SAFE_DX_RELEASE( m_pDevice ) 
+
+	SAFE_DX_RELEASE( m_pBasicEffect)
 }
 
 void CDX10Core::ResetDevice()
@@ -83,6 +90,29 @@ void *CDX10Core::GetDevice()
 void *CDX10Core::GetSwapChain()
 {
 	return m_pSwapChain;
+}
+
+void CDX10Core::InitBasicEffects()
+{
+	if ( FAILED (D3DX10CreateEffectFromFile( _T("Shaders/BasicEffect.fx"),
+											NULL,
+											NULL,
+											"fx_4_0",
+											D3D10_SHADER_ENABLE_STRICTNESS,
+											0,
+											m_pDevice,
+											NULL, NULL,
+											&m_pBasicEffect,
+											NULL, NULL) ) )
+	{
+		MessageBox(m_hWnd, _T("Could not load effect file!"), _T("DirectX 10 shader Error"), MB_OK );
+		exit(1);
+	}
+
+	//create matrix effect pointers
+	m_pViewMatrixEffectVariable			= m_pBasicEffect->GetVariableByName( "View" )->AsMatrix();
+	m_pProjectionMatrixEffectVariable	= m_pBasicEffect->GetVariableByName( "Projection" )->AsMatrix();
+	m_pWorldMatrixEffectVariable		= m_pBasicEffect->GetVariableByName( "World" )->AsMatrix();
 }
 
 bool CDX10Core::Init( HWND hWnd )
@@ -139,6 +169,8 @@ bool CDX10Core::Init( HWND hWnd )
 	m_pDevice->RSSetViewports( 1, &vp );
 	
 	InitDepthStencilState();
+
+	InitBasicEffects();
 
 	InitFont();
 

@@ -274,6 +274,10 @@
 					Name="Shaders"
 					>
 					<File
+						RelativePath="..\effects\BasicShaders.fx"
+						>
+					</File>
+					<File
 						RelativePath=".\Text.fx"
 						>
 						<FileConfiguration

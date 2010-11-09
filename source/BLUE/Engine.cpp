@@ -228,7 +228,10 @@ bool CEngine::LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName,
 			CObject *pNewObject = LoadMeshObjectFromFile(path);
 			if(pNewObject)
 			{
-
+				if(!szParentName || !*szParentName)
+					pNewObject->m_pParent = FindObject(szParentName);
+				else
+					pNewObject->m_pParent = pSceneRoot;
 			}
 			return true;
 		}

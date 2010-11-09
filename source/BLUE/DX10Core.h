@@ -39,7 +39,10 @@ protected:
 
 	void OutputText( const TCHAR *TEXT, float left, float top, unsigned int color );
 
-	void InitFont();	
+	void InitFont();
+
+	void InitBasicEffects();
+
 	void InitRasterizerState();
 	void InitDepthStencilState();
 	void InitRenderAndDepthStencilTargets( int widht, int height );	
@@ -51,7 +54,6 @@ protected:
 protected:
 	IDXGISwapChain			*m_pSwapChain;
 	ID3D10Device1			*m_pDevice;
-	
 
 	ID3D10RenderTargetView	*m_pRenderTargetView;
 	ID3D10DepthStencilView	*m_pDepthStencilView;
@@ -62,6 +64,13 @@ protected:
 
 	ID3D10RasterizerState	*m_pRasterizerState;
 	ID3D10DepthStencilState *m_pDepthStencilState;
+
+	ID3D10Effect				*m_pBasicEffect;
+	ID3D10EffectMatrixVariable	*m_pViewMatrixEffectVariable;
+	ID3D10EffectMatrixVariable	*m_pProjectionMatrixEffectVariable;
+	ID3D10EffectMatrixVariable	*m_pWorldMatrixEffectVariable;	
+
+
 
 };
 
