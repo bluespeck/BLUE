@@ -16,17 +16,17 @@ public:
 	operator float *();
 	
 	// Dot product	(IN, IN):OUT
-	static float	Dot(const CVector3 &vec1, const CVector3 &vec2);
+	static float	DotProduct(const CVector3 &vec1, const CVector3 &vec2);
 	// Cross product (OUT, IN, IN)
-	static void		Cross(CVector3 &vecResult, const CVector3 &vec1, const CVector3 &vec2);
+	static void		CrossProduct(CVector3 &vecResult, const CVector3 &vec1, const CVector3 &vec2);
 	
 	static void		Copy(CVector3 &vecDest, const CVector3 &vecSrc);// (OUT, IN)	
 	static void		Add(CVector3 &vecResult, const CVector3 &vec1, const CVector3 &vec2);	// (OUT, IN, IN)
 	static void		Subtract(CVector3 &vecResult, const CVector3 &vec1, const CVector3 &vec2);	// (OUT, IN, IN)
-	// Component-wise multiply (OUT, IN, IN)
-	static void		Multiply(CVector3 &vecResult, const CVector3 &vec1, const CVector3 &vec2);
+	// Multiply the vector with a scalar
+	static void		Multiply(CVector3 &vecResult, const CVector3 &vec, float fScale);
 	// Scale second vector then add result with first vector (OUT, IN, IN, IN)
-	static void		MAdd(CVector3 &vecResult, const CVector3 &vec1, const CVector3 &vec2, const float fScale);
+	static void		MAdd(CVector3 &vecResult, const CVector3 &vec1, const CVector3 &vec2, float fScale);
 	// Negates a vector (OUT, IN)
 	static void		Negate(CVector3 &vecResult, const CVector3 &vec);
 	// Normalizez a vector (OUT, IN)

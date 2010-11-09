@@ -16,15 +16,16 @@ public:
 	operator float *();
 	
 	// Dot product	(IN, IN):OUT
-	static float	Dot( const CVector2 &vec1, const CVector2 &vec2 );
+	static float	DotProduct( const CVector2 &vec1, const CVector2 &vec2 );
 	
 	static void		Copy( CVector2 &vecDest, const CVector2 &vecSrc );// (OUT, IN)	
 	static void		Add( CVector2 &vecResult, const CVector2 &vec1, const CVector2 &vec2 );	// (OUT, IN, IN)
 	static void		Subtract( CVector2 &vecResult, const CVector2 &vec1, const CVector2 &vec2 );	// (OUT, IN, IN)
-	// Component-wise multiply (OUT, IN, IN)
-	static void		Multiply( CVector2 &vecResult, const CVector2 &vec1, const CVector2 &vec2 );
+	
+	// Multiply a vector with a scalar
+	static void		Multiply( CVector2 &vecResult, const CVector2 &vec, float fScale);
 	// Scale second vector then add result with first vector (OUT, IN, IN, IN)
-	static void		MAdd( CVector2 &vecResult, const CVector2 &vec1, const CVector2 &vec2, const float fScale );
+	static void		MAdd( CVector2 &vecResult, const CVector2 &vec1, const CVector2 &vec2, float fScale );
 	// Negates a vector (OUT, IN)
 	static void		Negate( CVector2 &vecResult, const CVector2 &vec );
 	// Normalizez a vector (OUT, IN)

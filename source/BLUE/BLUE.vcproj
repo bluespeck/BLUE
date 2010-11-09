@@ -40,6 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
+				AdditionalIncludeDirectories="C:\Program Files\Assimp\include"
 				PreprocessorDefinitions="BLUE_DX10"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -59,8 +60,9 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="d3dx11.lib d3d11.lib d3dx10.lib d3d10_1.lib d3d10.lib dxerr.lib d2d1.lib  dwrite.lib"
+				AdditionalDependencies="d3dx11.lib d3d11.lib d3dx10.lib d3d10_1.lib d3d10.lib dxerr.lib d2d1.lib  dwrite.lib assimp.lib"
 				OutputFile="$(OutDir)\$(ProjectName)_d.lib"
+				AdditionalLibraryDirectories="C:\Program Files\Assimp\lib\x86;"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -105,6 +107,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
+				AdditionalIncludeDirectories="C:\Program Files\Assimp\include"
 				PreprocessorDefinitions="BLUE_DX10"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -122,7 +125,8 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
-				AdditionalDependencies="d3dx11.lib d3d11.lib d3dx10.lib d3d10_1.lib d3d10.lib dxerr.lib d2d1.lib  dwrite.lib"
+				AdditionalDependencies="d3dx11.lib d3d11.lib d3dx10.lib d3d10_1.lib d3d10.lib dxerr.lib d2d1.lib  dwrite.lib assimp.lib"
+				AdditionalLibraryDirectories="C:\Program Files\Assimp\lib\x86"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -156,6 +160,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Defines.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Engine.cpp"
 				>
 			</File>
@@ -172,11 +180,27 @@
 				>
 			</File>
 			<File
+				RelativePath=".\Material.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Material.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Matrix4.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Matrix4.h"
+				>
+			</File>
+			<File
+				RelativePath=".\Mesh.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\Mesh.h"
 				>
 			</File>
 			<File

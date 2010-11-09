@@ -23,12 +23,12 @@ void CVector3::Copy(CVector3 &vecDest, const CVector3 &vecSrc)
 	memcpy_s((void *)&vecDest, sizeof(CVector3), (void*)&vecSrc, sizeof(CVector3));
 }
 
-float CVector3::Dot(const CVector3 &vec1, const CVector3 &vec2)
+float CVector3::DotProduct(const CVector3 &vec1, const CVector3 &vec2)
 {
 	return vec1.x * vec2.x + vec1.y * vec2.y + vec1.z * vec2.z;
 }
 
-void CVector3::Cross(CVector3 &vecResult, const CVector3 &vec1, const CVector3 &vec2)
+void CVector3::CrossProduct(CVector3 &vecResult, const CVector3 &vec1, const CVector3 &vec2)
 {
 	vecResult = CVector3(vec1.y * vec2.z - vec1.z * vec2.y,
 		vec1.z * vec2.x - vec1.x * vec2.z,
@@ -50,7 +50,15 @@ void CVector3::Subtract(CVector3 &vecResult, const CVector3 &vec1, const CVector
 	vecResult.z = vec1.z - vec2.z;
 }
 
-void CVector3::MAdd(CVector3 &vecResult, const CVector3 &vec1, const CVector3 &vec2, const float fScale)
+void CVector3::Multiply(CVector3 &vecResult, const CVector3 &vec, float fScale)
+{
+	vecResult.x = vec.x * fScale;
+	vecResult.y = vec.y * fScale;
+	vecResult.z = vec.z * fScale;
+}
+
+
+void CVector3::MAdd(CVector3 &vecResult, const CVector3 &vec1, const CVector3 &vec2, float fScale)
 {
 	vecResult.x = vec1.x + vec2.x * fScale;
 	vecResult.y = vec1.y + vec2.y * fScale;

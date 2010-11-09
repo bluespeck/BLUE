@@ -386,7 +386,7 @@ void CMatrix4::MatMouseRotation( CMatrix4 &matResult, unsigned int startx, unsig
 	CVector3 vecCross;
 	float fDot, fAngle;
 
-	fDot = CVector3::Dot( vecStart, vecEnd );
+	fDot = CVector3::DotProduct( vecStart, vecEnd );
 
 	if ( fDot == 1.0 ) 
 	{
@@ -395,7 +395,7 @@ void CMatrix4::MatMouseRotation( CMatrix4 &matResult, unsigned int startx, unsig
 		return;	
 	}
 
-	CVector3::Cross( vecCross, vecStart, vecEnd); // axis of rotation
+	CVector3::CrossProduct( vecCross, vecStart, vecEnd); // axis of rotation
 
 	fAngle = 2.0f * acosf( fDot ); // angle of rotation
 

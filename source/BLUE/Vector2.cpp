@@ -23,7 +23,7 @@ void CVector2::Copy(CVector2 &vecDest, const CVector2 &vecSrc)
 	memcpy_s((void *)&vecDest, sizeof(CVector2), (void*)&vecSrc, sizeof(CVector2));
 }
 
-float CVector2::Dot(const CVector2 &vec1, const CVector2 &vec2)
+float CVector2::DotProduct(const CVector2 &vec1, const CVector2 &vec2)
 {
 	return vec1.x * vec2.x + vec1.y * vec2.y;
 }
@@ -40,7 +40,13 @@ void CVector2::Subtract(CVector2 &vecResult, const CVector2 &vec1, const CVector
 	vecResult.y = vec1.y - vec2.y;
 }
 
-void CVector2::MAdd(CVector2 &vecResult, const CVector2 &vec1, const CVector2 &vec2, const float fScale)
+void CVector2::Multiply(CVector2 &vecResult, const CVector2 &vec, float fScale)
+{
+	vecResult.x = vec.x * fScale;
+	vecResult.y = vec.y * fScale;
+}
+
+void CVector2::MAdd(CVector2 &vecResult, const CVector2 &vec1, const CVector2 &vec2, float fScale)
 {
 	vecResult.x = vec1.x + vec2.x * fScale;
 	vecResult.y = vec1.y + vec2.y * fScale;

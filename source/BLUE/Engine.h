@@ -8,6 +8,7 @@
 #endif
 
 #include "Object.h"
+#include "MeshObject.h"
 #include "Timer.h"
 
 
@@ -25,25 +26,27 @@ public:
 		OT_VOLUMETRIC
 	};
 	static CEngine *GetInstance();
-	static void DestroyInstace();
+	static void		DestroyInstace();
 
-	bool Init( HWND hWnd );
+	bool			Init( HWND hWnd );
 
-	CObject *FindObject( const TCHAR *szName );
-	bool LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName, ObjectTypes objType, TCHAR *path);
+	CObject		*	FindObject( const TCHAR *szName );
+	bool			LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName, ObjectTypes objType, const TCHAR *path);
 
-	void Update();	// this should be ran in the main loop; it calls engine's Update(dt) using the internal timer	
-	void Pause();
-	void Unpause();
-	bool IsPaused();
+	void			Update();	// this should be ran in the main loop; it calls engine's Update(dt) using the internal timer	
+	void			Pause();
+	void			Unpause();
+	bool			IsPaused();
 
 	// window message handlers
-	void OnResize( int width, int height );
+	void			OnResize( int width, int height );
 
-	void SetMinimized( bool bMinimized );	
+	void			SetMinimized( bool bMinimized );	
 	
 protected:
-	CObject *FindObject( CObject *pObj, const TCHAR *szName );
+	CObject		*	FindObject( CObject *pObj, const TCHAR *szName );
+	CObject		*	LoadMeshObjectFromFile(const TCHAR *path);
+	CMeshObject *	RecursiveLoadMeshObjectFromFile(const class aiScene* pScene, const class aiNode* pNode);
 
 	CEngine(void);
 	virtual ~CEngine(void);
