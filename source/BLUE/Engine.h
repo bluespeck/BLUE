@@ -8,6 +8,7 @@
 #endif
 
 #include "Object.h"
+#include "Timer.h"
 
 
 namespace BLUE
