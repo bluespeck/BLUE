@@ -3,7 +3,7 @@
 #include <cstring>
 
 #include "AppWindow.h"
-#include "DXCore.h"
+#include "Engine.h"
 
 LRESULT CALLBACK WndProc( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam );
 
@@ -34,21 +34,21 @@ LRESULT CAppWindow::MessageHandler( HWND hWnd, UINT message, WPARAM wParam, LPAR
 			currWidth = LOWORD( lParam );
 			currHeight = HIWORD( lParam );
 			bResizing = true;
-			if( m_pDXCore )
+			if( m_pEngine )
 				if( wParam == SIZE_MINIMIZED )
-					m_pDXCore->SetMinimized( true );
+					m_pEngine->SetMinimized( true );
 				else if( wParam == SIZE_MAXIMIZED || wParam == SIZE_RESTORED )
 				{
-					m_pDXCore->SetMinimized( false );
-					m_pDXCore->OnResize( LOWORD( lParam ), HIWORD( lParam ) );
+					m_pEngine->SetMinimized( false );
+					m_pEngine->OnResize( LOWORD( lParam ), HIWORD( lParam ) );
 				}
 			
 			break;
 		}
 	case WM_EXITSIZEMOVE:
 		{
-			if( m_pDXCore && bResizing )
-				m_pDXCore->OnResize( currWidth, currHeight );
+			if( m_pEngine && bResizing )
+				m_pEngine->OnResize( currWidth, currHeight );
 			break;
 		}
 	default:
@@ -61,6 +61,7 @@ LRESULT CAppWindow::MessageHandler( HWND hWnd, UINT message, WPARAM wParam, LPAR
 }
 
 CAppWindow::CAppWindow( void )
+:m_pEngine(NULL)
 {
 }
 
@@ -130,9 +131,9 @@ HWND CAppWindow::GetWindowHandle()
 	return m_hWnd;
 }
 
-void CAppWindow::BindDXCore(class IDXCore *pDXCore)
+void CAppWindow::Bind3DEngine(class CEngine *pEngine)
 {
-	m_pDXCore = pDXCore;
+	m_pEngine = pEngine;
 }
 
 

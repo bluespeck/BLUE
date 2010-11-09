@@ -23,23 +23,44 @@ public:
 		OT_POINT,
 		OT_VOLUMETRIC
 	};
+	static CEngine *GetInstance();
+	static void DestroyInstace();
 
+	bool Init( HWND hWnd );
+
+	CObject *FindObject( const TCHAR *szName );
+	bool LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName, ObjectTypes objType, TCHAR *path);
+
+	void Update();	// this should be ran in the main loop; it calls engine's Update(dt) using the internal timer	
+	void Pause();
+	void Unpause();
+	bool IsPaused();
+
+	// window message handlers
+	void OnResize( int width, int height );
+
+	void SetMinimized( bool bMinimized );	
+	
+protected:
+	CObject *FindObject( CObject *pObj, const TCHAR *szName );
 
 	CEngine(void);
 	virtual ~CEngine(void);
 
-	CObject *FindObject( const TCHAR *szName );
-	bool LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName, ObjectTypes objType, TCHAR *path);
-	
-	
 protected:
-	CObject *FindObject( CObject *pObj, const TCHAR *szName );
+
+	static CEngine *g_pEngine;
 
 #ifdef BLUE_DIRECTX
 	IDXCore *pCore;
 #endif
 
+	CTimer					m_timer;
+	
 	CObject	*pSceneRoot;
+
+	bool					m_bMinimized;	
+
 };
 
 }// end namespace BLUE

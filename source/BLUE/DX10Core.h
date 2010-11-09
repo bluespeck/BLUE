@@ -26,13 +26,13 @@ public:
 	virtual bool CDX10Core::Init( HWND hWnd, const DXInitDesc &initDesc );
 
 	virtual void OnResize( int width, int height );
-	
+	virtual void Update( float dt );
+	virtual void Render( float dt );
 protected:
 	CDX10Core();
 	virtual ~CDX10Core( void );
 
-	virtual void Update( float dt );
-	virtual void Render( float dt );
+	
 
 	virtual void BeginDraw();
 	virtual void EndDraw();

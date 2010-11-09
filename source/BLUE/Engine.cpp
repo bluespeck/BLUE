@@ -10,6 +10,26 @@
 
 namespace BLUE
 {
+// The only instance of a CEngine class
+CEngine *CEngine::g_pEngine = NULL;
+
+CEngine * CEngine::GetInstance()
+{
+	if( g_pEngine )
+		return g_pEngine;
+	else
+		return ( g_pEngine = new CEngine );		
+}
+
+void CEngine::DestroyInstace()
+{
+	if( g_pEngine )
+	{
+		delete g_pEngine;
+		g_pEngine = NULL;
+	}
+}
+
 
 CEngine::CEngine(void)
 {
@@ -19,6 +39,7 @@ CEngine::CEngine(void)
 	pCore = CDX11Core::GetInstance();
 #endif
 
+	m_timer.Reset();
 	pSceneRoot = new CObject();
 	pSceneRoot->SetName(L"scene_root");	
 }
@@ -26,6 +47,36 @@ CEngine::CEngine(void)
 CEngine::~CEngine(void)
 {
 	pCore->DestroyInstace();
+}
+
+bool CEngine::Init(HWND hwnd)
+{
+	return pCore->Init(hwnd);
+}
+
+void CEngine::Update()
+{
+	m_timer.Tick();
+	float dt = m_timer.GetDeltaTime();
+	
+	pCore->Update( dt );
+	if( !m_bMinimized )
+		pCore->Render( dt );
+}
+
+void CEngine::Pause()
+{
+	m_timer.Pause();
+}
+
+void CEngine::Unpause()
+{
+	m_timer.Unpause();
+}
+
+bool CEngine::IsPaused()
+{
+	return m_timer.IsPaused();
 }
 
 CObject *CEngine::FindObject( CObject *pObj, const TCHAR *szName )
@@ -56,6 +107,17 @@ CObject *CEngine::FindObject( const TCHAR *szName )
 		return NULL;
 
 	return FindObject( pSceneRoot, szName );
+}
+
+void CEngine::OnResize(int width, int height)
+{
+	pCore->OnResize(width, height);
+}
+
+void CEngine::SetMinimized(bool bMinimized)
+{
+	pCore->SetMinimized(bMinimized);
+	m_bMinimized = bMinimized;
 }
 
 bool CEngine::LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName, ObjectTypes objType, TCHAR *path)

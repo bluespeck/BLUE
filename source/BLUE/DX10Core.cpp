@@ -258,6 +258,8 @@ void CDX10Core::EndDraw()
 
 void CDX10Core::Update( float dt )
 {
+	ComputeFPS( dt );
+
 	if( dt == 0 )
 		return;	
 }

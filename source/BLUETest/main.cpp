@@ -1,10 +1,10 @@
 #include <tchar.h>
 #include <assert.h>
 
-#include "../blue/AppWindow.h"
-#include "../blue/DX10Core.h"
-#include "../blue/DX11Core.h"
+#define BLUE_DX10
 
+#include "../blue/AppWindow.h"
+#include "../blue/Engine.h"
 
 int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow )
 {
@@ -14,14 +14,14 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	pAppWindow->ShowAppWindow( nCmdShow );	
 
 	// Initialize DX core
-	BLUE::IDXCore *pDXCore = BLUE::CDX10Core::GetInstance();
-	if( !pDXCore->Init( pAppWindow->GetWindowHandle() ) )
+	BLUE::CEngine *pEngine = BLUE::CEngine::GetInstance();
+	if( !pEngine->Init( pAppWindow->GetWindowHandle() ) )
 	{
-		assert(0 && "Could not initialize DirectX 10");
+		assert(0 && "Could not initialize BLUE");
 		exit(1);
 	}
 	
-	pAppWindow->BindDXCore( pDXCore );
+	pAppWindow->Bind3DEngine( pEngine );
 
 	MSG msg = { 0 };
 	while( msg.message != WM_QUIT )
@@ -35,12 +35,12 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 		// Otherwise, do engine stuff.
 		else
 		{	
-			pDXCore->Update();			
+			pEngine->Update();			
 		}
 	}
 
 	// Delete DX core
-	BLUE::CDX10Core::DestroyInstace();
+	BLUE::CEngine::DestroyInstace();
 
 	return msg.wParam;
 	
