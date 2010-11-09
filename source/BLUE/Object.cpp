@@ -65,6 +65,11 @@ void CObject::DeleteHierarchy()
 	DeleteMe();
 }
 
+const TCHAR *CObject::GetName()
+{
+	return m_szName;
+}
+
 void CObject::SetName( const TCHAR *szName )
 {
 	if( szName != NULL || szName[0] == 0)

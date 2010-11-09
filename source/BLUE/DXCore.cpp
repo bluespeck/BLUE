@@ -36,8 +36,7 @@ void IDXCore::DestroyInstace()
 
 
 IDXCore::IDXCore()
-{	
-	m_timer.Reset();
+{
 	m_bInitialized = false;
 	
 	_tcscpy_s(m_szEngineInfo, _T( "FPS: 0" ) );
@@ -97,33 +96,6 @@ bool IDXCore::Init( HWND hWnd, const DXInitDesc &initDesc )
 bool IDXCore::UpdateConfiguration( const DXInitDesc &initDesc )
 { 
 	return false; 
-}
-
-void IDXCore::Update()
-{
-	m_timer.Tick();
-	float dt = m_timer.GetDeltaTime();
-	
-	ComputeFPS( dt );
-
-	Update( dt );
-	if( !m_bMinimized )
-		Render( dt );
-}
-
-void IDXCore::Pause()
-{
-	m_timer.Pause();
-}
-
-void IDXCore::Unpause()
-{
-	m_timer.Unpause();
-}
-
-bool IDXCore::IsPaused()
-{
-	return m_timer.IsPaused();
 }
 
 void IDXCore::ComputeFPS( float dt )

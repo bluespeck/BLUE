@@ -20,13 +20,13 @@ public:
 	CWindowInput *GetWindowInput();
 	HWND GetWindowHandle();	
 
-	void BindDXCore(class IDXCore *pDXCore);
+	void Bind3DEngine(class CEngine *pEngine);
 
 private:
 	static CAppWindow sAppWindow;
 	HWND m_hWnd;
 	CWindowInput m_input;
-	class IDXCore *m_pDXCore;
+	class CEngine *m_pEngine;
 
 	CAppWindow( void );	
 

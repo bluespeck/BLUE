@@ -110,9 +110,9 @@ bool CDX10Core::Init( HWND hWnd )
 	sd.SwapEffect = ( DXGI_SWAP_EFFECT ) m_initDesc.swapEffect;
 		
 	UINT createDeviceFlags	= 0;
-#if defined(DEBUG) || defined(_DEBUG)  
-	createDeviceFlags |= D3D10_CREATE_DEVICE_DEBUG;
-#endif
+//#if defined(DEBUG) || defined(_DEBUG)  
+//	createDeviceFlags |= D3D10_CREATE_DEVICE_DEBUG;
+//#endif
 
 	HR( D3D10CreateDeviceAndSwapChain1( 
 		NULL, 
@@ -258,9 +258,21 @@ void CDX10Core::EndDraw()
 
 void CDX10Core::Update( float dt )
 {
+	ComputeFPS( dt );
+
 	if( dt == 0 )
 		return;	
 }
+
+struct CColorVertex
+{
+	D3DXVECTOR3 position;	
+	D3DXCOLOR color;
+	bool operator == (const CColorVertex &vertex)
+	{
+		return position == vertex.position && color == vertex.color;
+	}	
+};
 
 void CDX10Core::Render( float dt )
 {

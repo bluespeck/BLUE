@@ -39,21 +39,18 @@ public:
 	void SetDefaultSettings();
 // ]]
 
-	void Update();	// this should be ran in the main loop; it calls engine's Update(dt) using the internal timer	
-	void Pause();
-	void Unpause();
-	bool IsPaused();
-
 	// window message handlers
 	virtual void OnResize( int width, int height ) = 0;
 
 	void SetMinimized( bool bMinimized );
+	virtual void Update( float dt ) = 0;
+	virtual void Render( float dt ) = 0;
 protected:
 	virtual void BeginDraw() = 0;
 	virtual void EndDraw() = 0;	
 	
-	virtual void Update( float dt ) = 0;
-	virtual void Render( float dt ) = 0;
+	
+	
 	IDXCore();
 	virtual ~IDXCore( void );
 
@@ -67,8 +64,6 @@ protected:
 	HWND					m_hWnd;
 
 	bool					m_bInitialized;
-	
-	CTimer					m_timer;
 
 	TCHAR					m_szEngineInfo[MAX_STRING_LENGTH];
 
