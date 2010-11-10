@@ -55,6 +55,9 @@ CDX10Core::CDX10Core()
 	m_pWorldMatrixEffectVariable		= NULL;
 	m_pProjectionMatrixEffectVariable	= NULL;
 	m_pViewMatrixEffectVariable			= NULL;
+	
+	D3DXMatrixIdentity(&m_matWorld);
+	D3DXMatrixIdentity(&m_matProjection);
 }
 
 CDX10Core::~CDX10Core( void )
@@ -285,6 +288,7 @@ void CDX10Core::BeginDraw()
 
 void CDX10Core::EndDraw()
 {
+	OutputEngineInfo();
 	HR( m_pSwapChain->Present( 1, 0 ) );
 }
 
@@ -306,15 +310,10 @@ struct CColorVertex
 	}	
 };
 
-void CDX10Core::Render( float dt )
+void CDX10Core::Render( CObject *pObject, float dt )
 {
 	if( dt == 0 )
 		return;
-	
-	BeginDraw();
-	
-	OutputEngineInfo();
-	EndDraw();
 }
 
 void CDX10Core::OutputEngineInfo()

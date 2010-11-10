@@ -183,6 +183,7 @@ void CDX11Core::BeginDraw()
 
 void CDX11Core::EndDraw()
 {
+	OutputText( m_szEngineInfo, 10, 10, 0xffffffff );
 	m_pSwapChain->Present( 0, 0 );
 }
 
@@ -193,15 +194,11 @@ void CDX11Core::Update( float dt )
 
 }
 
-void CDX11Core::Render( float dt )
+void CDX11Core::Render( CObject *pObject, float dt )
 {
 	if( dt == 0)
 		return;
 	
-	BeginDraw();
-	EndDraw();
-
-	OutputText( m_szEngineInfo, 10, 10, 0xffffffff );
 }
 
 void CDX11Core::OutputText( const TCHAR *text, float left, float top, unsigned int color )

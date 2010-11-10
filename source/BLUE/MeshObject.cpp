@@ -9,7 +9,8 @@ namespace BLUE
 
 //--------------------------------------------------------------------------------------
 CMeshObject::CMeshObject(void)
-:m_pMesh(NULL)
+: m_pMesh(NULL)
+, m_eType( OT_MESH )
 {
 }
 

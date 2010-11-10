@@ -6,6 +6,7 @@ namespace BLUE
 {
 
 CPointObject::CPointObject(void)
+: m_eType(OT_POINT)
 {
 }
 

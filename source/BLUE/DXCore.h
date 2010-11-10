@@ -44,10 +44,11 @@ public:
 
 	void SetMinimized( bool bMinimized );
 	virtual void Update( float dt ) = 0;
-	virtual void Render( float dt ) = 0;
-protected:
+	virtual void Render( class CObject *pObject, float dt ) = 0;
 	virtual void BeginDraw() = 0;
 	virtual void EndDraw() = 0;	
+protected:
+	
 	
 	
 	

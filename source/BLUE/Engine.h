@@ -10,6 +10,7 @@
 #include "Object.h"
 #include "MeshObject.h"
 #include "Timer.h"
+#include "EngineUtils.h"
 
 
 namespace BLUE
@@ -18,22 +19,15 @@ namespace BLUE
 class CEngine
 {
 public:
-	enum ObjectTypes
-	{
-		OT_BASIC,
-		OT_MESH,
-		OT_POINT,
-		OT_VOLUMETRIC
-	};
 	static CEngine *GetInstance();
 	static void		DestroyInstace();
 
 	bool			Init( HWND hWnd );
 
 	CObject		*	FindObject( const TCHAR *szName );
-	bool			LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName, ObjectTypes objType, const TCHAR *path);
+	bool			LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName, ObjectType objType, const TCHAR *path);
 
-	void			Update();	// this should be ran in the main loop; it calls engine's Update(dt) using the internal timer	
+	void			Run();	// this should be ran in the main loop; it calls engine's Update(dt) using the internal timer	
 	void			Pause();
 	void			Unpause();
 	bool			IsPaused();
@@ -44,24 +38,30 @@ public:
 	void			SetMinimized( bool bMinimized );	
 	
 protected:
-	CObject		*	FindObject( CObject *pObj, const TCHAR *szName );
 	CObject		*	LoadMeshObjectFromFile(const TCHAR *path);
+	CObject		*	RecursiveFindObject( CObject *pObj, const TCHAR *szName );
 	CMeshObject *	RecursiveLoadMeshObjectFromFile(const class aiScene* pScene, const class aiNode* pNode);
 
-	CEngine(void);
-	virtual ~CEngine(void);
+	void			RecursiveUpdate(CObject *pObj, float dt);
+	void			RecursiveRender(CObject *pObj, float dt);
+
+	void			Render(float dt);
+	void			Update(float dt);
+
+					CEngine(void);
+					virtual ~CEngine(void);
 
 protected:
 
 	static CEngine *g_pEngine;
 
 #ifdef BLUE_DIRECTX
-	IDXCore *pCore;
+	IDXCore				*	pCore;
 #endif
 
 	CTimer					m_timer;
 	
-	CObject	*pSceneRoot;
+	CObject				*	m_pSceneRoot;
 
 	bool					m_bMinimized;	
 

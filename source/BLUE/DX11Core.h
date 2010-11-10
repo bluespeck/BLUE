@@ -28,7 +28,7 @@ public:
 	virtual void OnResize(int width, int height);
 
 	virtual void Update( float dt );
-	virtual void Render( float dt );
+	virtual void Render( CObject *pObj, float dt );
 protected:
 	CDX11Core();
 	virtual ~CDX11Core( void );

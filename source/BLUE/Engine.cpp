@@ -49,8 +49,8 @@ CEngine::CEngine(void)
 
 	m_bMinimized = false;
 	m_timer.Reset();
-	pSceneRoot = new CObject();
-	pSceneRoot->SetName(L"scene_root");	
+	m_pSceneRoot = new CObject();
+	m_pSceneRoot->SetName(L"scene_root");	
 }
 
 CEngine::~CEngine(void)
@@ -63,16 +63,54 @@ bool CEngine::Init(HWND hwnd)
 	return pCore->Init(hwnd);
 }
 
-void CEngine::Update()
+void CEngine::RecursiveUpdate(CObject *pObject, float dt)
+{
+	for(UINT i = 0, s = pObject->m_pControllers.size(); i < s; ++i)
+		pObject->m_pControllers[i]->Update(dt);
+	// recursively update all children
+	CObject *pObj = pObject->m_pChild;
+	while(pObj)
+	{
+		RecursiveUpdate(pObj, dt);
+		pObj = pObj->m_pNextBrother;
+	}
+}
+
+void CEngine::RecursiveRender(CObject *pObject, float dt)
+{
+	//for(UINT i = 0, s = pObject->m_pControllers.size(); i < s; ++i)
+	//	pObject->m_pControllers[i]->Update(dt);
+	pCore->Render( pObject, dt );
+	// recursively update all children
+	CObject *pObj = pObject->m_pChild;
+	while(pObj)
+	{
+		RecursiveRender(pObj, dt);
+		pObj = pObj->m_pNextBrother;
+	}
+}
+
+void CEngine::Update(float dt)
+{
+	RecursiveUpdate(m_pSceneRoot, dt);
+}
+
+void CEngine::Render(float dt)
+{
+	pCore->BeginDraw();
+	RecursiveRender(m_pSceneRoot, dt );
+	pCore->EndDraw();
+}
+
+void CEngine::Run()
 {
 	m_timer.Tick();
 	float dt = m_timer.GetDeltaTime();
 	
-	pCore->Update( dt );
-	if( !m_bMinimized )
-		pCore->Render( dt );
+	Update(dt);
+	if(!m_bMinimized)
+		Render(dt);
 }
-
 void CEngine::Pause()
 {
 	m_timer.Pause();
@@ -88,7 +126,7 @@ bool CEngine::IsPaused()
 	return m_timer.IsPaused();
 }
 
-CObject *CEngine::FindObject( CObject *pObj, const TCHAR *szName )
+CObject *CEngine::RecursiveFindObject( CObject *pObj, const TCHAR *szName )
 {
 	if(pObj == NULL)
 		return NULL;
@@ -102,7 +140,7 @@ CObject *CEngine::FindObject( CObject *pObj, const TCHAR *szName )
 		CObject *pFound = NULL;
 		for( CObject *p = pObj->m_pChild; p != NULL; p = p->m_pNextBrother )
 		{
-			pFound = FindObject( p, szName );
+			pFound = RecursiveFindObject( p, szName );
 			if( pFound != NULL )
 				return pFound;
 		}
@@ -112,10 +150,10 @@ CObject *CEngine::FindObject( CObject *pObj, const TCHAR *szName )
 
 CObject *CEngine::FindObject( const TCHAR *szName )
 {
-	if( pSceneRoot->GetName() == NULL )
+	if( m_pSceneRoot->GetName() == NULL )
 		return NULL;
 
-	return FindObject( pSceneRoot, szName );
+	return RecursiveFindObject( m_pSceneRoot, szName );
 }
 
 void CEngine::OnResize(int width, int height)
@@ -204,7 +242,7 @@ CObject *CEngine::LoadMeshObjectFromFile(const TCHAR *path)
 	}
 }
 
-bool CEngine::LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName, ObjectTypes objType, const TCHAR *path)
+bool CEngine::LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName, ObjectType objType, const TCHAR *path)
 {
 	CObject *pNewObject = NULL;
 	switch(objType)
@@ -216,7 +254,7 @@ bool CEngine::LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName,
 			if(szName && *szName)
 				pNewObject->SetName(szName);
 			if(!szParentName || !*szParentName)
-				pNewObject->m_pParent = pSceneRoot;
+				pNewObject->m_pParent = m_pSceneRoot;
 			else
 				pNewObject->m_pParent = FindObject(szParentName);
 			return true;
@@ -231,7 +269,7 @@ bool CEngine::LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName,
 				if(!szParentName || !*szParentName)
 					pNewObject->m_pParent = FindObject(szParentName);
 				else
-					pNewObject->m_pParent = pSceneRoot;
+					pNewObject->m_pParent = m_pSceneRoot;
 			}
 			return true;
 		}

@@ -172,6 +172,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\EngineUtils.h"
+				>
+			</File>
+			<File
 				RelativePath=".\IController.cpp"
 				>
 			</File>

@@ -27,7 +27,7 @@ public:
 
 	virtual void OnResize( int width, int height );
 	virtual void Update( float dt );
-	virtual void Render( float dt );
+	virtual void Render( CObject *pObject, float dt );
 protected:
 	CDX10Core();
 	virtual ~CDX10Core( void );
@@ -68,10 +68,10 @@ protected:
 	ID3D10Effect				*m_pBasicEffect;
 	ID3D10EffectMatrixVariable	*m_pViewMatrixEffectVariable;
 	ID3D10EffectMatrixVariable	*m_pProjectionMatrixEffectVariable;
-	ID3D10EffectMatrixVariable	*m_pWorldMatrixEffectVariable;	
+	ID3D10EffectMatrixVariable	*m_pWorldMatrixEffectVariable;
 
-
-
+	D3DXMATRIX				m_matWorld;
+	D3DXMATRIX				m_matProjection;
 };
 
 } // end namespace

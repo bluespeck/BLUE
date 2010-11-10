@@ -1,5 +1,6 @@
 #pragma once
 #include "object.h"
+#include "EngineUtils.h"
 
 namespace BLUE
 {
@@ -10,8 +11,12 @@ public:
 	CPointObject(void);
 	~CPointObject(void);
 
+public:
+	const ObjectType m_eType;	// the type of the object
+
 protected:
-	 // color
+	
+	// color
 };
 
 } // end namespace BLUE

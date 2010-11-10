@@ -1,6 +1,7 @@
 #pragma once
 #include "Object.h"
 #include "Mesh.h"
+#include "EngineUtils.h"
 
 namespace BLUE
 {
@@ -12,6 +13,7 @@ public:
 	virtual ~CMeshObject(void);
 
 public:
+	const ObjectType m_eType;	// the type of the object
 
 	CMesh *m_pMesh;
 };

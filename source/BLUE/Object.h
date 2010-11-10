@@ -10,6 +10,7 @@
 #include "Matrix4.h"
 #include "Vector3.h"
 #include "IController.h"
+#include "EngineUtils.h"
 
 //#include "Physics.h"
 
@@ -43,6 +44,8 @@ public:
 	CObject *GetRootObj();
 
 public:
+	const ObjectType m_eType;	// the type of the object
+
 	CObject *m_pParent;
 	CObject *m_pChild;
 	CObject *m_pNextBrother;
