@@ -44,7 +44,7 @@ public:
 	CObject *GetRootObj();
 
 public:
-	const ObjectType m_eType;	// the type of the object
+	virtual ObjectType GetObjectType(){return OT_BASIC;}	// the type of the object
 
 	CObject *m_pParent;
 	CObject *m_pChild;

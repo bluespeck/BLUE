@@ -50,7 +50,9 @@ CEngine::CEngine(void)
 	m_bMinimized = false;
 	m_timer.Reset();
 	m_pSceneRoot = new CObject();
-	m_pSceneRoot->SetName(L"scene_root");	
+	m_pSceneRoot->SetName(_T("scene_root"));	
+
+	_tcscpy_s(m_szEngineInfo, _T("FPS: 0"));
 }
 
 CEngine::~CEngine(void)
@@ -92,14 +94,46 @@ void CEngine::RecursiveRender(CObject *pObject, float dt)
 
 void CEngine::Update(float dt)
 {
+	ComputeFPS( dt );
 	RecursiveUpdate(m_pSceneRoot, dt);
 }
 
 void CEngine::Render(float dt)
 {
 	pCore->BeginDraw();
-	RecursiveRender(m_pSceneRoot, dt );
+	
+	RecursiveRender(m_pSceneRoot, dt );	
+	
+	OutputText( m_szEngineInfo, 5, 5, 0xff000000 );
+	
 	pCore->EndDraw();
+}
+
+void CEngine::OutputText( const TCHAR *text, float left, float top, DWORD color )
+{
+	pCore->OutputText(text, left, top, color);
+	
+}
+
+void CEngine::ComputeFPS( float dt )
+{
+	static int frameCount = 0;
+	static float fTimeAcc= 0.0f;
+
+	frameCount++;
+
+	// Retrieve FPS (once per second)
+	if( fTimeAcc >= 1.0f )
+	{			
+		_stprintf_s( m_szEngineInfo, _T( "FPS: %d" ), frameCount);		
+
+		frameCount = 0;
+		fTimeAcc = 0.0f;		
+	}
+	else
+	{
+		fTimeAcc += dt;
+	}
 }
 
 void CEngine::Run()
@@ -150,7 +184,7 @@ CObject *CEngine::RecursiveFindObject( CObject *pObj, const TCHAR *szName )
 
 CObject *CEngine::FindObject( const TCHAR *szName )
 {
-	if( m_pSceneRoot->GetName() == NULL )
+	if( szName == NULL || !*szName || m_pSceneRoot->GetName() == NULL )
 		return NULL;
 
 	return RecursiveFindObject( m_pSceneRoot, szName );
@@ -198,7 +232,7 @@ CMeshObject *CEngine::RecursiveLoadMeshObjectFromFile(const aiScene* pScene, con
 			for(UINT faceIndex = 0; faceIndex < pMesh->mNumFaces; ++faceIndex)
 			{
 				UINT bytesForIndices = pMesh->mFaces[faceIndex].mNumIndices * sizeof(UINT);
-				memcpy(pCurrentMeshVertex, pMesh->mFaces[faceIndex].mIndices, bytesForIndices);
+				memcpy(pCurrentMeshIndex, pMesh->mFaces[faceIndex].mIndices, bytesForIndices);
 				pCurrentMeshIndex += bytesForIndices;
 			}
 		}
@@ -208,10 +242,12 @@ CMeshObject *CEngine::RecursiveLoadMeshObjectFromFile(const aiScene* pScene, con
 	{
 		pObj->m_pChild = RecursiveLoadMeshObjectFromFile(pScene, pNode->mChildren[0]);
 		CObject *pLastBrother = pObj->m_pChild;
+		pLastBrother->m_pParent = pObj;
 		for (UINT i = 1; i < pNode->mNumChildren; ++i)
 		{			
 			pLastBrother->m_pNextBrother = RecursiveLoadMeshObjectFromFile(pScene, pNode->mChildren[i]);
 			pLastBrother = pLastBrother->m_pNextBrother;
+			pLastBrother->m_pParent = pObj;
 		}
 	}
 	return pObj;
@@ -220,13 +256,18 @@ CMeshObject *CEngine::RecursiveLoadMeshObjectFromFile(const aiScene* pScene, con
 CObject *CEngine::LoadMeshObjectFromFile(const TCHAR *path)
 {	
 	const aiScene* pScene = NULL;
+	//aiSetImportPropertyInteger("AI_CONFIG_PP_SBP_REMOVE", aiPrimitiveType_POINT | aiPrimitiveType_LINE );
+	UINT importFlag = aiProcess_ConvertToLeftHanded 
+		| aiProcess_Triangulate;
+		//| aiProcess_FlipWindingOrder;
 #ifdef UNICODE
 	char szPath[MAX_PATH]={0};
 	wcstombs(szPath, path, MAX_PATH);
 	szPath[MAX_PATH - 1] = 0;
-	pScene = aiImportFile(szPath, aiProcessPreset_TargetRealtime_Quality);
+
+	pScene = aiImportFile(szPath, importFlag);
 #else
-	pScene = aiImportFile(path, aiProcessPreset_TargetRealtime_Quality);
+	pScene = aiImportFile(path, importFlag);
 #endif
 	
 	if(pScene)
@@ -257,6 +298,7 @@ bool CEngine::LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName,
 				pNewObject->m_pParent = m_pSceneRoot;
 			else
 				pNewObject->m_pParent = FindObject(szParentName);
+			m_pSceneRoot->m_pChild = pNewObject;
 			return true;
 		}		
 		break;
@@ -267,9 +309,12 @@ bool CEngine::LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName,
 			if(pNewObject)
 			{
 				if(!szParentName || !*szParentName)
-					pNewObject->m_pParent = FindObject(szParentName);
-				else
 					pNewObject->m_pParent = m_pSceneRoot;
+				else
+				{
+					pNewObject->m_pParent = FindObject(szParentName);
+				}
+				m_pSceneRoot->m_pChild = pNewObject;
 			}
 			return true;
 		}

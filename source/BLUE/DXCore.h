@@ -43,10 +43,11 @@ public:
 	virtual void OnResize( int width, int height ) = 0;
 
 	void SetMinimized( bool bMinimized );
-	virtual void Update( float dt ) = 0;
 	virtual void Render( class CObject *pObject, float dt ) = 0;
 	virtual void BeginDraw() = 0;
 	virtual void EndDraw() = 0;	
+	
+	virtual void OutputText( const TCHAR *text, float left, float top, DWORD color ) = 0;
 protected:
 	
 	
@@ -55,7 +56,7 @@ protected:
 	IDXCore();
 	virtual ~IDXCore( void );
 
-	void ComputeFPS( float dt );
+	
 
 protected:
 	// single instance of DXCore
@@ -65,8 +66,6 @@ protected:
 	HWND					m_hWnd;
 
 	bool					m_bInitialized;
-
-	TCHAR					m_szEngineInfo[MAX_STRING_LENGTH];
 
 	bool					m_bMinimized;
 

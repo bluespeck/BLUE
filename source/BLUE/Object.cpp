@@ -21,9 +21,7 @@ m_pChild( NULL ),
 m_pNextBrother( NULL ),
 m_bDirty(false), 
 m_vecScaleFactors( 1.0f, 1.0f, 1.0f ), 
-m_bHighlight( false ),
-m_eType( OT_BASIC )
-
+m_bHighlight( false )
 {	
 	m_objCount++;
 

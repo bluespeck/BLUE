@@ -33,20 +33,24 @@ public:
 	bool			IsPaused();
 
 	// window message handlers
-	void			OnResize( int width, int height );
+	void			OnResize(int width, int height);
 
-	void			SetMinimized( bool bMinimized );	
+	void			SetMinimized(bool bMinimized);	
+
+	void			OutputText( const TCHAR *text, float left, float top, DWORD color );
 	
 protected:
 	CObject		*	LoadMeshObjectFromFile(const TCHAR *path);
-	CObject		*	RecursiveFindObject( CObject *pObj, const TCHAR *szName );
-	CMeshObject *	RecursiveLoadMeshObjectFromFile(const class aiScene* pScene, const class aiNode* pNode);
+	CObject		*	RecursiveFindObject(CObject *pObj, const TCHAR *szName);
+	CMeshObject *	RecursiveLoadMeshObjectFromFile(const struct aiScene* pScene, const struct aiNode* pNode);
 
 	void			RecursiveUpdate(CObject *pObj, float dt);
 	void			RecursiveRender(CObject *pObj, float dt);
 
 	void			Render(float dt);
 	void			Update(float dt);
+
+	void			ComputeFPS(float dt);
 
 					CEngine(void);
 					virtual ~CEngine(void);
@@ -63,6 +67,8 @@ protected:
 	
 	CObject				*	m_pSceneRoot;
 
+
+	TCHAR					m_szEngineInfo[MAX_STRING_LENGTH];
 	bool					m_bMinimized;	
 
 };

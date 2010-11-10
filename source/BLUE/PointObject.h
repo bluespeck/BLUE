@@ -12,7 +12,7 @@ public:
 	~CPointObject(void);
 
 public:
-	const ObjectType m_eType;	// the type of the object
+	virtual ObjectType GetObjectType(){ return OT_POINT; }	// the type of the object
 
 protected:
 	

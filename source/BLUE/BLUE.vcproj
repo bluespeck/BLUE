@@ -17,7 +17,7 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="&quot;$(SolutionDir)\..\bin\$(ConfigurationName)&quot;"
+			OutputDirectory="&quot;$(SolutionDir)\..\bin&quot;"
 			IntermediateDirectory="&quot;$(SolutionDir)\..\build\$(ConfigurationName)&quot;"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -82,7 +82,7 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="&quot;$(SolutionDir)\..\bin\$(ConfigurationName)&quot;"
+			OutputDirectory="&quot;$(SolutionDir)\..\bin&quot;"
 			IntermediateDirectory="&quot;$(SolutionDir)\..\build\$(ConfigurationName)&quot;"
 			ConfigurationType="4"
 			CharacterSet="1"
@@ -275,24 +275,11 @@
 					</File>
 				</Filter>
 				<Filter
-					Name="Shaders"
+					Name="Effects"
 					>
 					<File
-						RelativePath="..\effects\BasicShaders.fx"
+						RelativePath="..\..\bin\effects\BasicShaders.fx"
 						>
-					</File>
-					<File
-						RelativePath=".\Text.fx"
-						>
-						<FileConfiguration
-							Name="Debug|Win32"
-							>
-							<Tool
-								Name="VCCustomBuildTool"
-								CommandLine="copy Text.fx &quot;$(SolutionDir)$(ConfigurationName)&quot;&#x0D;&#x0A;"
-								Outputs="$(SolutionDir)$(ConfigurationName)Text.fx"
-							/>
-						</FileConfiguration>
 					</File>
 				</Filter>
 				<Filter

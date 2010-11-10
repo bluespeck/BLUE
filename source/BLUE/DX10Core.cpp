@@ -2,10 +2,13 @@
 
 #include <tchar.h>
 
+#include <DXErr.h>
+
 #include "DX10Core.h"
 #include "DXCore.h"
 #include "DXUtils.h"
-#include <DXErr.h>
+#include "MeshObject.h"
+#include "Object.h"
 
 namespace BLUE
 {
@@ -57,6 +60,7 @@ CDX10Core::CDX10Core()
 	m_pViewMatrixEffectVariable			= NULL;
 	
 	D3DXMatrixIdentity(&m_matWorld);
+	D3DXMatrixIdentity(&m_matView);
 	D3DXMatrixIdentity(&m_matProjection);
 }
 
@@ -97,25 +101,40 @@ void *CDX10Core::GetSwapChain()
 
 void CDX10Core::InitBasicEffects()
 {
-	if ( FAILED (D3DX10CreateEffectFromFile( _T("Shaders/BasicEffect.fx"),
-											NULL,
-											NULL,
-											"fx_4_0",
-											D3D10_SHADER_ENABLE_STRICTNESS,
-											0,
-											m_pDevice,
-											NULL, NULL,
-											&m_pBasicEffect,
-											NULL, NULL) ) )
+	HRESULT hr = D3DX10CreateEffectFromFile( _T("effects/BasicShaders.fx"),
+		NULL, NULL,
+		"fx_4_0",
+		D3D10_SHADER_ENABLE_STRICTNESS,
+		0, m_pDevice,
+		NULL, NULL,
+		&m_pBasicEffect,
+		NULL, NULL);
+	if ( FAILED ( hr ) )
 	{
 		MessageBox(m_hWnd, _T("Could not load effect file!"), _T("DirectX 10 shader Error"), MB_OK );
 		exit(1);
 	}
 
-	//create matrix effect pointers
+	m_pBasicTechnique = m_pBasicEffect->GetTechniqueByName("BasicRender");
+	
 	m_pViewMatrixEffectVariable			= m_pBasicEffect->GetVariableByName( "View" )->AsMatrix();
 	m_pProjectionMatrixEffectVariable	= m_pBasicEffect->GetVariableByName( "Projection" )->AsMatrix();
 	m_pWorldMatrixEffectVariable		= m_pBasicEffect->GetVariableByName( "World" )->AsMatrix();
+}
+
+void CDX10Core::InitMatrices(UINT width, UINT height)
+{
+	D3DXVECTOR3 camera[3] = {
+		D3DXVECTOR3(0.0f, 0.0f, -5.0f),
+		D3DXVECTOR3(0.0f, 0.0f, 1.0f),
+		D3DXVECTOR3(0.0f, 1.0f, 0.0f) 
+	};
+	
+	D3DXMatrixIdentity(&m_matWorld);
+
+	D3DXMatrixLookAtLH(&m_matView, &camera[0], &camera[1], &camera[2]);
+
+	D3DXMatrixPerspectiveFovLH(&m_matProjection, (float)D3DX_PI * 0.5f, (float)width/(float)height, 0.1f, 500.0f);
 }
 
 bool CDX10Core::Init( HWND hWnd )
@@ -170,7 +189,9 @@ bool CDX10Core::Init( HWND hWnd )
 	vp.MaxDepth = 1.0f;
 
 	m_pDevice->RSSetViewports( 1, &vp );
-	
+
+	InitMatrices(vp.Width, vp.Height);
+
 	InitDepthStencilState();
 
 	InitBasicEffects();
@@ -223,6 +244,7 @@ bool CDX10Core::Init( HWND hWnd, const DXInitDesc &initDesc )
 
 	m_pDevice->RSSetViewports( 1, &vp );
 
+	InitMatrices(vp.Width, vp.Height);
 	
 	InitDepthStencilState();
 
@@ -287,17 +309,8 @@ void CDX10Core::BeginDraw()
 }
 
 void CDX10Core::EndDraw()
-{
-	OutputEngineInfo();
+{	
 	HR( m_pSwapChain->Present( 1, 0 ) );
-}
-
-void CDX10Core::Update( float dt )
-{
-	ComputeFPS( dt );
-
-	if( dt == 0 )
-		return;	
 }
 
 struct CColorVertex
@@ -310,15 +323,170 @@ struct CColorVertex
 	}	
 };
 
+void CDX10Core::SetRasterizerState()
+{
+	D3D10_RASTERIZER_DESC rasterizerState;
+	rasterizerState.CullMode = D3D10_CULL_BACK;
+	rasterizerState.FillMode = D3D10_FILL_SOLID;
+	rasterizerState.FrontCounterClockwise = true;
+	rasterizerState.DepthBias = false;
+	rasterizerState.DepthBiasClamp = 0;
+	rasterizerState.SlopeScaledDepthBias = 0;
+	rasterizerState.DepthClipEnable = true;
+	rasterizerState.ScissorEnable = false;
+	rasterizerState.MultisampleEnable = false;
+	rasterizerState.AntialiasedLineEnable = true;
+
+	ID3D10RasterizerState* pRS;
+	m_pDevice->CreateRasterizerState( &rasterizerState, &pRS);
+	m_pDevice->RSSetState(pRS);
+}
+
+void CDX10Core::RenderMeshObject(CMeshObject *pObj, float dt)
+{
+	static float timeSpent = 0;
+	timeSpent+= dt;
+	if(!pObj || !pObj->m_pMesh || !pObj->m_pMesh->m_numVertices)
+		return;
+
+	struct Vertex
+	{
+		D3DXVECTOR3 pos;
+		D3DXVECTOR4 color;
+
+		Vertex( D3DXVECTOR3 p, D3DXVECTOR4 c ) : pos(p), color(c) {}
+	};
+
+	D3D10_INPUT_ELEMENT_DESC layout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT,0, 12, D3D10_INPUT_PER_VERTEX_DATA, 0 }
+	};
+
+	UINT numElements = 2;
+	D3D10_PASS_DESC passDesc = {0};
+	m_pBasicTechnique->GetPassByIndex( 0 )->GetDesc( &passDesc );
+
+	ID3D10InputLayout *pVertexLayout = NULL;
+	if ( FAILED( m_pDevice->CreateInputLayout( layout,
+		numElements,
+		passDesc.pIAInputSignature,
+		passDesc.IAInputSignatureSize,
+		&pVertexLayout ) ) ) 
+	{
+		MessageBox(m_hWnd, _T("Error creating input layout"), _T("DX render error"), MB_OK);
+		return;
+	}
+
+	// Set the input layout
+	m_pDevice->IASetInputLayout( pVertexLayout );
+
+	//create vertex buffer
+	//---------------------------------------------
+
+	UINT numVertices = pObj->m_pMesh->m_numVertices;
+
+	D3D10_BUFFER_DESC bd;
+	bd.Usage = D3D10_USAGE_DYNAMIC;
+	bd.ByteWidth = sizeof( Vertex ) * numVertices; //total size of buffer in bytes
+	bd.BindFlags = D3D10_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+	bd.MiscFlags = 0;
+
+	ID3D10Buffer *pVertexBuffer = NULL;
+	HRESULT hresult = S_OK;
+	if ( FAILED( hresult = m_pDevice->CreateBuffer( &bd, NULL, &pVertexBuffer ) ) ) 
+	{
+		MessageBox(m_hWnd, _T("Could not create vertex buffer!"), _T("DX render error"), MB_OK);
+		return;
+	}
+
+	// Set vertex buffer
+	UINT stride = sizeof( Vertex );
+	UINT offset = 0;
+	m_pDevice->IASetVertexBuffers( 0, 1, &pVertexBuffer, &stride, &offset );
+
+	//fill vertex buffer with vertices
+	Vertex* v = NULL;
+
+	//lock vertex buffer for CPU use
+	pVertexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**) &v );
+
+	for(UINT i = 0; i < numVertices; ++i)
+	{
+		v[i] = Vertex( D3DXVECTOR3((float *)(void *)pObj->m_pMesh->m_pVertices[i]), D3DXVECTOR4(0.2f, 0.3f , 0.7f, 1 ));
+	}	
+
+	pVertexBuffer->Unmap();
+
+
+	//create index buffer
+	//---------------------------------------------
+	ID3D10Buffer *pIndexBuffer = NULL;
+	UINT numIndices = pObj->m_pMesh->m_numIndices;
+	bd.ByteWidth = sizeof( UINT ) * numIndices; //total size of buffer in bytes
+	bd.BindFlags = D3D10_BIND_INDEX_BUFFER;
+	if ( FAILED( hresult = m_pDevice->CreateBuffer( &bd, NULL, &pIndexBuffer ) ) ) 
+	{
+		MessageBox(m_hWnd, _T("Could not create index buffer!"), _T("DX render error"), MB_OK);
+	}
+
+	// Set index buffer	
+	m_pDevice->IASetIndexBuffer(pIndexBuffer, DXGI_FORMAT_R32_UINT, 0 );
+
+	//fill vertex buffer with vertices
+	UINT* indices = NULL;
+
+	//lock index buffer for CPU use
+	pIndexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**) &indices );
+
+	for(UINT i = 0; i < numIndices; ++i)
+	{
+		indices[i] = pObj->m_pMesh->m_pIndices[i];
+	}	
+	pIndexBuffer->Unmap();
+
+	// Set primitive topology 
+	m_pDevice->IASetPrimitiveTopology( D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+
+	D3DXMATRIX rotMatY, rotMatX, translate;
+	D3DXMatrixRotationY(&rotMatY, 0.1 * 3.1416 * timeSpent);
+	D3DXMatrixRotationX(&rotMatX,  0.3416 );
+	D3DXMatrixTranslation(&translate, 0, 0, 20);
+	m_matWorld = D3DXMATRIX((float *)pObj->m_matGlobal) * rotMatX * rotMatY * translate ;
+	
+
+	SetRasterizerState();
+
+	//get technique desc
+	D3D10_TECHNIQUE_DESC techDesc;
+	m_pBasicTechnique->GetDesc( &techDesc );
+
+	m_pWorldMatrixEffectVariable->SetMatrix(m_matWorld);
+	m_pViewMatrixEffectVariable->SetMatrix(m_matView);
+	m_pProjectionMatrixEffectVariable->SetMatrix(m_matProjection);
+
+	for( UINT p = 0; p < techDesc.Passes; ++p )
+	{
+		//apply technique
+		m_pBasicTechnique->GetPassByIndex( p )->Apply( 0 );
+
+		//draw
+		m_pDevice->DrawIndexed( numIndices, 0, 0 );
+	}
+}
+
 void CDX10Core::Render( CObject *pObject, float dt )
 {
 	if( dt == 0 )
 		return;
-}
 
-void CDX10Core::OutputEngineInfo()
-{
-	OutputText( m_szEngineInfo, 5, 5, 0xff000000 );
+	switch(pObject->GetObjectType())
+	{
+	case OT_MESH:
+		RenderMeshObject((CMeshObject *) pObject, dt);
+		break;
+	}
 }
 
 void CDX10Core::OnResize(int width, int height)
@@ -343,6 +511,7 @@ void CDX10Core::OnResize(int width, int height)
 
 	m_pDevice->RSSetViewports( 1, &vp );
 
+	InitMatrices(vp.Width, vp.Height);
 	
 	InitDepthStencilState();
 
@@ -371,7 +540,7 @@ void CDX10Core::InitFont()
 	HR( D3DX10CreateFontIndirect( m_pDevice, &fontDesc, &m_pFont ) );
 }
 
-void CDX10Core::OutputText( const TCHAR *text, float left, float top, unsigned int color )
+void CDX10Core::OutputText( const TCHAR *text, float left, float top, DWORD color )
 {	
 	RECT rc ={ ( int )left, ( int )top, 0, 0 };
 	

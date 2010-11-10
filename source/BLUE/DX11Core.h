@@ -25,10 +25,11 @@ public:
 	virtual bool CDX11Core::Init( HWND hWnd );
 	virtual bool CDX11Core::Init( HWND hWnd, const DXInitDesc &initDesc );
 
-	virtual void OnResize(int width, int height);
-
-	virtual void Update( float dt );
 	virtual void Render( CObject *pObj, float dt );
+	
+	virtual void OnResize(int width, int height);	
+
+	virtual void OutputText( const TCHAR *TEXT, float left, float top, DWORD color );
 protected:
 	CDX11Core();
 	virtual ~CDX11Core( void );
@@ -38,7 +39,7 @@ protected:
 	virtual void BeginDraw();
 	virtual void EndDraw();
 
-	void OutputText( const TCHAR *TEXT, float left, float top, unsigned int color );
+	
 
 	void InitFont();	
 

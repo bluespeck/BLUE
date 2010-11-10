@@ -38,8 +38,6 @@ void IDXCore::DestroyInstace()
 IDXCore::IDXCore()
 {
 	m_bInitialized = false;
-	
-	_tcscpy_s(m_szEngineInfo, _T( "FPS: 0" ) );
 	m_bMinimized = false;
 }
 
@@ -96,27 +94,6 @@ bool IDXCore::Init( HWND hWnd, const DXInitDesc &initDesc )
 bool IDXCore::UpdateConfiguration( const DXInitDesc &initDesc )
 { 
 	return false; 
-}
-
-void IDXCore::ComputeFPS( float dt )
-{
-	static int frameCount = 0;
-	static float fTimeAcc= 0.0f;
-
-	frameCount++;
-
-	// Retrieve FPS (once per second)
-	if( fTimeAcc >= 1.0f )
-	{			
-		_stprintf_s( m_szEngineInfo, _T( "FPS: %d" ), frameCount);		
-
-		frameCount = 0;
-		fTimeAcc = 0.0f;		
-	}
-	else
-	{
-		fTimeAcc += dt;
-	}
 }
 
 void IDXCore::SetMinimized( bool bMinimized )

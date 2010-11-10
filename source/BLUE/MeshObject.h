@@ -13,7 +13,7 @@ public:
 	virtual ~CMeshObject(void);
 
 public:
-	const ObjectType m_eType;	// the type of the object
+	virtual ObjectType GetObjectType(){ return OT_MESH; }
 
 	CMesh *m_pMesh;
 };
