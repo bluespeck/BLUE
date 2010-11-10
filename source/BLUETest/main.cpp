@@ -22,7 +22,8 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	}
 	
 	pAppWindow->Bind3DEngine( pEngine );
-	pEngine->LoadObjectFromFile(L"myObj", NULL, BLUE::OT_MESH, L"D:\\test\\models\\3DS\\jeep1.3ds");
+	pEngine->LoadObjectFromFile(L"myObj1", NULL, BLUE::OT_MESH, L"D:\\test\\models\\3ds\\jeep1.3ds");
+	pEngine->LoadObjectFromFile(L"myObj2", NULL, BLUE::OT_MESH, L"D:\\test\\models\\3ds\\pyramob.3ds");
 
 	MSG msg = { 0 };
 	while( msg.message != WM_QUIT )

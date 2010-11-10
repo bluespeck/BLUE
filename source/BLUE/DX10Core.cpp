@@ -328,7 +328,7 @@ void CDX10Core::SetRasterizerState()
 	D3D10_RASTERIZER_DESC rasterizerState;
 	rasterizerState.CullMode = D3D10_CULL_BACK;
 	rasterizerState.FillMode = D3D10_FILL_SOLID;
-	rasterizerState.FrontCounterClockwise = true;
+	rasterizerState.FrontCounterClockwise = false;
 	rasterizerState.DepthBias = false;
 	rasterizerState.DepthBiasClamp = 0;
 	rasterizerState.SlopeScaledDepthBias = 0;
@@ -450,7 +450,7 @@ void CDX10Core::RenderMeshObject(CMeshObject *pObj, float dt)
 	m_pDevice->IASetPrimitiveTopology( D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
 
 	D3DXMATRIX rotMatY, rotMatX, translate;
-	D3DXMatrixRotationY(&rotMatY, 0.1 * 3.1416 * timeSpent);
+	D3DXMatrixRotationY(&rotMatY, 0.01 * 3.1416 * timeSpent);
 	D3DXMatrixRotationX(&rotMatX,  0.3416 );
 	D3DXMatrixTranslation(&translate, 0, 0, 20);
 	m_matWorld = D3DXMATRIX((float *)pObj->m_matGlobal) * rotMatX * rotMatY * translate ;
@@ -474,6 +474,8 @@ void CDX10Core::RenderMeshObject(CMeshObject *pObj, float dt)
 		//draw
 		m_pDevice->DrawIndexed( numIndices, 0, 0 );
 	}
+	pVertexBuffer->Release();
+	pIndexBuffer->Release();
 }
 
 void CDX10Core::Render( CObject *pObject, float dt )

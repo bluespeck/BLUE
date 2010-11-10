@@ -256,10 +256,10 @@ CMeshObject *CEngine::RecursiveLoadMeshObjectFromFile(const aiScene* pScene, con
 CObject *CEngine::LoadMeshObjectFromFile(const TCHAR *path)
 {	
 	const aiScene* pScene = NULL;
-	//aiSetImportPropertyInteger("AI_CONFIG_PP_SBP_REMOVE", aiPrimitiveType_POINT | aiPrimitiveType_LINE );
+	aiSetImportPropertyInteger("AI_CONFIG_PP_SBP_REMOVE", aiPrimitiveType_POINT | aiPrimitiveType_LINE );
 	UINT importFlag = aiProcess_ConvertToLeftHanded 
-		| aiProcess_Triangulate;
-		//| aiProcess_FlipWindingOrder;
+		| aiProcess_Triangulate
+		| aiProcess_SortByPType;
 #ifdef UNICODE
 	char szPath[MAX_PATH]={0};
 	wcstombs(szPath, path, MAX_PATH);
@@ -298,7 +298,15 @@ bool CEngine::LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName,
 				pNewObject->m_pParent = m_pSceneRoot;
 			else
 				pNewObject->m_pParent = FindObject(szParentName);
-			m_pSceneRoot->m_pChild = pNewObject;
+			if(!m_pSceneRoot->m_pChild)
+				m_pSceneRoot->m_pChild = pNewObject;
+			else
+			{
+				CObject *pLastBrother = m_pSceneRoot->m_pChild;
+				while(pLastBrother->m_pNextBrother)
+					pLastBrother = pLastBrother->m_pNextBrother;
+				pLastBrother->m_pNextBrother = pNewObject;
+			}
 			return true;
 		}		
 		break;
@@ -314,7 +322,15 @@ bool CEngine::LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName,
 				{
 					pNewObject->m_pParent = FindObject(szParentName);
 				}
-				m_pSceneRoot->m_pChild = pNewObject;
+				if(!m_pSceneRoot->m_pChild)
+					m_pSceneRoot->m_pChild = pNewObject;
+				else
+				{
+					CObject *pLastBrother = m_pSceneRoot->m_pChild;
+					while(pLastBrother->m_pNextBrother)
+						pLastBrother = pLastBrother->m_pNextBrother;
+					pLastBrother->m_pNextBrother = pNewObject;
+				}
 			}
 			return true;
 		}
