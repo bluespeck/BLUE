@@ -51,6 +51,7 @@ protected:
 	void			Update(float dt);
 
 	void			ComputeFPS(float dt);
+	void			RecursiveDeleteObjects(CObject *pObj);
 
 					CEngine(void);
 					virtual ~CEngine(void);

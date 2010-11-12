@@ -55,9 +55,33 @@ CEngine::CEngine(void)
 	_tcscpy_s(m_szEngineInfo, _T("FPS: 0"));
 }
 
+void CEngine::RecursiveDeleteObjects(CObject *pObj)
+{
+	if(pObj)
+	{
+		// delete children
+		if(pObj->m_pChild)
+		{
+			CObject *pBrother = pObj->m_pChild;
+			while(pBrother)
+			{
+				CObject *pNextBrother = pBrother->m_pNextBrother;
+				RecursiveDeleteObjects(pBrother);
+				pBrother = pNextBrother;
+			}
+		}
+		// delete current object
+		delete pObj;
+	}
+}
+
 CEngine::~CEngine(void)
 {
 	pCore->DestroyInstace();
+	if(m_pSceneRoot)
+	{
+		RecursiveDeleteObjects(m_pSceneRoot);
+	}
 }
 
 bool CEngine::Init(HWND hwnd)
@@ -102,7 +126,7 @@ void CEngine::Render(float dt)
 {
 	pCore->BeginDraw();
 	
-	pCore->SetWireframe(true);
+	pCore->SetWireframe(false);
 	pCore->ApplyRasterizerState();
 
 	RecursiveRender(m_pSceneRoot, dt );	
@@ -213,10 +237,13 @@ CMeshObject *CEngine::RecursiveLoadMeshObjectFromFile(const aiScene* pScene, con
 
 	memcpy(pObj->m_matLocal.mat, &pNode->mTransformation, sizeof(pObj->m_matLocal));
 
-	pObj->m_pMesh = new CMesh;
+	pObj->m_pMesh = new CMesh;	
+	pObj->m_pMesh->SetHasNormals(false);
 	for (UINT i = 0; i < pNode->mNumMeshes; ++i)
 	{
 		const aiMesh* pMesh = pScene->mMeshes[pNode->mMeshes[i]];
+		if(pMesh->HasNormals())
+			pObj->m_pMesh->SetHasNormals(true);
 		pObj->m_pMesh->m_numVertices += pMesh->mNumVertices;
 		pObj->m_pMesh->m_numIndices += pMesh->mNumFaces * 3;	// only for triangles
 	}
@@ -224,7 +251,9 @@ CMeshObject *CEngine::RecursiveLoadMeshObjectFromFile(const aiScene* pScene, con
 	if(pObj->m_pMesh->m_numVertices)
 	{
 		// No materials for now
-		pObj->m_pMesh->AllocSpace(pObj->m_pMesh->m_numVertices, pObj->m_pMesh->m_numIndices, 0);
+		pObj->m_pMesh->SetHasMaterials(false);
+		pObj->m_pMesh->SetNumTexCoordsPerVertex(0);
+		pObj->m_pMesh->InitMesh();
 
 		// copy vertex and index data from aimesh
 		BYTE *pCurrentMeshVertex	= (BYTE *)pObj->m_pMesh->m_pVertices;
@@ -234,6 +263,13 @@ CMeshObject *CEngine::RecursiveLoadMeshObjectFromFile(const aiScene* pScene, con
 			const aiMesh* pMesh = pScene->mMeshes[pNode->mMeshes[i]];
 			UINT bytesForVertices = pMesh->mNumVertices * sizeof(CVector3);		
 			memcpy(pCurrentMeshVertex, pMesh->mVertices, bytesForVertices);
+			if(pMesh->HasNormals())
+			{
+				BYTE *pCurrentMeshNormal = (BYTE *)pObj->m_pMesh->m_pNormals + (pCurrentMeshVertex - (BYTE *)pObj->m_pMesh->m_pVertices);
+				UINT bytesForNormals = bytesForVertices;
+				memcpy(pCurrentMeshNormal, pMesh->mNormals, bytesForNormals);
+			}			
+			if(pMesh->HasNormals())
 			pCurrentMeshVertex += bytesForVertices;
 			for(UINT faceIndex = 0; faceIndex < pMesh->mNumFaces; ++faceIndex)
 			{
@@ -263,9 +299,11 @@ CObject *CEngine::LoadMeshObjectFromFile(const TCHAR *path)
 {	
 	const aiScene* pScene = NULL;
 	aiSetImportPropertyInteger("AI_CONFIG_PP_SBP_REMOVE", aiPrimitiveType_POINT | aiPrimitiveType_LINE );
-	UINT importFlag = aiProcess_ConvertToLeftHanded 
-		| aiProcess_Triangulate
-		| aiProcess_SortByPType;
+	UINT importFlag = aiProcess_Triangulate
+		| aiProcess_SortByPType
+		| aiProcess_ConvertToLeftHanded
+		//| aiProcess_FlipWindingOrder
+		;
 #ifdef UNICODE
 	char szPath[MAX_PATH]={0};
 	wcstombs(szPath, path, MAX_PATH);

@@ -50,6 +50,7 @@ public:
 	virtual void OutputText( const TCHAR *text, float left, float top, DWORD color ) = 0;
 
 	virtual void ApplyRasterizerState() = 0;
+	virtual void ApplyDepthStencilState() = 0;
 	virtual void SetWireframe(bool bWireframe) = 0;
 protected:
 	

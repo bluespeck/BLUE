@@ -13,7 +13,15 @@ public:
 	CMesh(void);
 	~CMesh(void);
 
-	void AllocSpace(UINT numVertices, UINT numIndices, UINT numMaterials);
+
+	// Configuration methods; must be called before InitMesh
+	void SetNumVertices(UINT numVertices);
+	void SetHasNormals(bool bHasNormals);
+	void SetNumTexCoordsPerVertex(UINT numTexCoordsPerVertex);
+	void SetHasMaterials(bool bHasMaterials);
+	
+	// Allocates memory for all the buffers inside this mesh
+	void InitMesh();
 
 public:
 	CVector3	*m_pVertices;
@@ -23,8 +31,11 @@ public:
 	UINT		*m_pIndices;
 	CMaterial	*m_pMaterials;
 
+	bool		m_bHasNormals;
+	bool		m_bHasMaterials;
 	UINT		m_numVertices;
 	UINT		m_numIndices;
+	UINT		m_numTexCoordsPerVertex;	
 };
 
 }// end namespace BLUE

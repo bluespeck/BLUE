@@ -43,7 +43,10 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 
 	// Delete DX core
 	BLUE::CEngine::DestroyInstace();
-
+#ifdef DEBUG
+	_CrtMemDumpAllObjectsSince(NULL);
+#endif
 	return msg.wParam;
+
 	
 }

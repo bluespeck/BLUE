@@ -32,6 +32,7 @@ public:
 	virtual void OutputText( const TCHAR *TEXT, float left, float top, DWORD color );
 
 	virtual void ApplyRasterizerState();
+	virtual void ApplyDepthStencilState();
 
 	virtual void SetWireframe(bool bWireframe);
 protected:

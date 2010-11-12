@@ -94,6 +94,9 @@ void CDX10Core::CleanupDevice()
 	}
 	SAFE_DX_RELEASE( m_pIndexBuffer );
 
+	SAFE_DX_RELEASE( m_pRasterizerState );
+	SAFE_DX_RELEASE( m_pDepthStencilState );
+
 	SAFE_DX_RELEASE( m_pSwapChain );		
 	SAFE_DX_RELEASE( m_pDevice );
 }
@@ -320,6 +323,11 @@ void CDX10Core::InitDepthStencilState()
 
 }
 
+void CDX10Core::ApplyDepthStencilState()
+{
+	m_pDevice->OMSetDepthStencilState( m_pDepthStencilState, 0 );
+}
+
 void CDX10Core::InitRasterizerState()
 {	
 	D3D10_RASTERIZER_DESC rasterizerState;
@@ -332,7 +340,7 @@ void CDX10Core::InitRasterizerState()
 	rasterizerState.DepthClipEnable = true;
 	rasterizerState.ScissorEnable = false;
 	rasterizerState.MultisampleEnable = false;
-	rasterizerState.AntialiasedLineEnable = true;
+	rasterizerState.AntialiasedLineEnable = false;
 
 	m_pDevice->CreateRasterizerState( &rasterizerState, &m_pRasterizerState);
 }
@@ -340,9 +348,12 @@ void CDX10Core::InitRasterizerState()
 void CDX10Core::BeginDraw()
 {
 	// Just clear the backbuffer
-	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 0.5f }; //red,green,blue,alpha
+	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 1 }; //red,green,blue,alpha
 	m_pDevice->ClearRenderTargetView( m_pRenderTargetView, D3DXCOLOR(0xffffffff) );			
 	m_pDevice->ClearDepthStencilView( m_pDepthStencilView, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 1.0f, 0 );
+
+	ApplyDepthStencilState();
+	ApplyRasterizerState();
 }
 
 void CDX10Core::EndDraw()
@@ -377,13 +388,14 @@ void CDX10Core::InitializeBuffers()
 {
 	D3D10_INPUT_ELEMENT_DESC layout[] =
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT,1, 0, D3D10_INPUT_PER_VERTEX_DATA, 0 }
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D10_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 2, 0, D3D10_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
 	const UINT maxNumVertices = 150000;
 
-	UINT numElements = 2;
+	UINT numElements = 3;
 	D3D10_PASS_DESC passDesc = {0};
 	m_pBasicTechnique->GetPassByIndex( 0 )->GetDesc( &passDesc );
 
@@ -401,32 +413,39 @@ void CDX10Core::InitializeBuffers()
 	//create vertex buffer
 	//---------------------------------------------
 	D3D10_BUFFER_DESC bd;
-	bd.Usage = D3D10_USAGE_DYNAMIC;
-	bd.ByteWidth = sizeof( D3DXVECTOR3 ) * maxNumVertices; //total size of buffer in bytes
+	bd.Usage = D3D10_USAGE_DYNAMIC;	
 	bd.BindFlags = D3D10_BIND_VERTEX_BUFFER;
 	bd.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
 	bd.MiscFlags = 0;
 
-	if ( FAILED( m_pDevice->CreateBuffer( &bd, NULL, &m_pVertexBuffers[VBT_POSITION1] ) ) ) 
+	bd.ByteWidth = sizeof( D3DXVECTOR3 ) * maxNumVertices; //total size of buffer in bytes
+	if ( FAILED( m_pDevice->CreateBuffer( &bd, NULL, &m_pVertexBuffers[VBT_POSITION0] ) ) ) 
 	{
-		MessageBox(m_hWnd, _T("Could not create vertex buffer!"), _T("DX render error"), MB_OK);
+		MessageBox(m_hWnd, _T("Could not create vertex positions buffer!"), _T("DX render error"), MB_OK);
 		return;
 	}
 	
 	bd.ByteWidth = sizeof( D3DXVECTOR4 ) * maxNumVertices; //total size of buffer in bytes
-	if ( FAILED( m_pDevice->CreateBuffer( &bd, NULL, &m_pVertexBuffers[VBT_COLOR1] ) ) ) 
+	if ( FAILED( m_pDevice->CreateBuffer( &bd, NULL, &m_pVertexBuffers[VBT_COLOR0] ) ) ) 
 	{
-		MessageBox(m_hWnd, _T("Could not create vertex buffer!"), _T("DX render error"), MB_OK);
+		MessageBox(m_hWnd, _T("Could not create vertex colors buffer!"), _T("DX render error"), MB_OK);
+		return;
+	}
+
+	bd.ByteWidth = sizeof( D3DXVECTOR3 ) * maxNumVertices; //total size of buffer in bytes
+	if ( FAILED( m_pDevice->CreateBuffer( &bd, NULL, &m_pVertexBuffers[VBT_NORMAL0] ) ) ) 
+	{
+		MessageBox(m_hWnd, _T("Could not create vertex normals buffer!"), _T("DX render error"), MB_OK);
 		return;
 	}
 
 	D3DXVECTOR4 *v = NULL;
-	m_pVertexBuffers[VBT_COLOR1]->Map(D3D10_MAP_WRITE_DISCARD, 0, (void **)&v );
+	m_pVertexBuffers[VBT_COLOR0]->Map(D3D10_MAP_WRITE_DISCARD, 0, (void **)&v );
 	for(UINT i = 0; i < maxNumVertices; ++i)
 	{		
 		v[i] = D3DXVECTOR4(0,0, 1, 1);
 	}
-	m_pVertexBuffers[VBT_COLOR1]->Unmap();	
+	m_pVertexBuffers[VBT_COLOR0]->Unmap();	
 
 	//create index buffer
 	//---------------------------------------------	
@@ -452,9 +471,14 @@ void CDX10Core::FillBuffers(CMeshObject *pObj)
 	void* v = NULL;
 
 	//lock vertex buffer for CPU use
-	m_pVertexBuffers[VBT_POSITION1]->Map(D3D10_MAP_WRITE_DISCARD, 0, &v );
+	m_pVertexBuffers[VBT_POSITION0]->Map(D3D10_MAP_WRITE_DISCARD, 0, &v );
 	memcpy(v, pObj->m_pMesh->m_pVertices, sizeof(D3DXVECTOR3) * numVertices);
-	m_pVertexBuffers[VBT_POSITION1]->Unmap();
+	m_pVertexBuffers[VBT_POSITION0]->Unmap();
+
+	m_pVertexBuffers[VBT_NORMAL0]->Map(D3D10_MAP_WRITE_DISCARD, 0, &v );
+	memcpy(v, pObj->m_pMesh->m_pNormals, sizeof(D3DXVECTOR3) * numVertices);
+	m_pVertexBuffers[VBT_NORMAL0]->Unmap();
+
 	
 	//fill vertex buffer with vertices
 	UINT* indices = NULL;
@@ -478,7 +502,7 @@ void CDX10Core::RenderMeshObject(CMeshObject *pObj, float dt)
 	D3DXMATRIX rotMatY, rotMatX, translate;
 	D3DXMatrixRotationY(&rotMatY, 0.01f * 3.1416f * timeSpent);
 	D3DXMatrixRotationX(&rotMatX,  0.3416f );
-	D3DXMatrixTranslation(&translate, 0, 0, 130);
+	D3DXMatrixTranslation(&translate, 0, 0, 80);
 	m_matWorld = D3DXMATRIX((float *)pObj->m_matGlobal) * rotMatX * rotMatY * translate ;	
 
 	m_pWorldMatrixEffectVariable->SetMatrix(m_matWorld);
@@ -488,10 +512,10 @@ void CDX10Core::RenderMeshObject(CMeshObject *pObj, float dt)
 	// Set the input layout
 	m_pDevice->IASetInputLayout( m_pVertexLayout );
 
-	ID3D10Buffer * pVBs[]={ m_pVertexBuffers[VBT_POSITION1], m_pVertexBuffers[VBT_COLOR1]};
-	UINT strides[] = {sizeof(D3DXVECTOR3), sizeof(D3DXVECTOR4)};
-	UINT offsets[] = {0, 0};
-	m_pDevice->IASetVertexBuffers( 0, 2, pVBs, strides, offsets );
+	ID3D10Buffer * pVBs[]={ m_pVertexBuffers[VBT_POSITION0], m_pVertexBuffers[VBT_COLOR0], m_pVertexBuffers[VBT_NORMAL0]};
+	UINT strides[] = {sizeof(D3DXVECTOR3), sizeof(D3DXVECTOR4), sizeof(D3DXVECTOR3)};
+	UINT offsets[] = {0, 0, 0};
+	m_pDevice->IASetVertexBuffers( 0, 3, pVBs, strides, offsets );
 
 	// Set index buffer	
 	m_pDevice->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0 );
