@@ -30,6 +30,10 @@ public:
 	virtual void OnResize(int width, int height);	
 
 	virtual void OutputText( const TCHAR *TEXT, float left, float top, DWORD color );
+
+	virtual void ApplyRasterizerState();
+
+	virtual void SetWireframe(bool bWireframe);
 protected:
 	CDX11Core();
 	virtual ~CDX11Core( void );

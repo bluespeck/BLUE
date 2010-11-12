@@ -29,6 +29,7 @@ namespace BLUE
 #endif
 
 #define SAFE_DX_RELEASE(x) {if(x) { x->Release(); x = NULL;}}
+
 #define MAX_STRING_LENGTH 256
 
 struct DXInitDesc
@@ -63,10 +64,14 @@ struct DXInitDesc
 	UINT flags;
 };
 
-struct SimpleVertex
+enum VertexBufferTypes
 {
-	CVector3 Pos;
-	CVector2 Tex;
+	VBT_POSITION1,
+	VBT_COLOR1,
+	VBT_NORMAL1,
+	VBT_TEXCOORD1,
+	VBT_TEXCOORD2,
+	VBT_COUNT
 };
 
 //HRESULT CompileShaderFromFile( TCHAR* szFileName, LPCSTR szEntryPoint, LPCSTR szShaderModel, ID3DBlob** ppBlobOut, const D3D_SHADER_MACRO* pDefines = NULL );

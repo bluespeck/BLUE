@@ -32,6 +32,11 @@ public:
 	virtual void EndDraw();
 	
 	virtual void OutputText( const TCHAR *text, float left, float top, DWORD color );
+
+	virtual void ApplyRasterizerState();
+
+	virtual void SetWireframe(bool bWireframe);
+
 protected:
 	CDX10Core();
 	virtual ~CDX10Core( void );
@@ -53,7 +58,8 @@ protected:
 	void InitDepthStencilState();
 	void InitRenderAndDepthStencilTargets( int widht, int height );	
 	
-	void SetRasterizerState();
+	void InitializeBuffers();
+	void FillBuffers(CMeshObject *pObj);
 	
 	void DrawCoordAxes();
 
@@ -80,6 +86,12 @@ protected:
 	D3DXMATRIX				m_matWorld;
 	D3DXMATRIX				m_matView;
 	D3DXMATRIX				m_matProjection;
+
+	ID3D10Buffer *m_pVertexBuffers[VBT_COUNT];
+	ID3D10Buffer *m_pIndexBuffer;
+	ID3D10InputLayout *m_pVertexLayout;
+
+	UINT currentVBPos, currentIBPos;
 };
 
 } // end namespace

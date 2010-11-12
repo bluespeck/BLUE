@@ -53,11 +53,20 @@ CDX10Core::CDX10Core()
 	m_pSwapChain				= NULL;	
 	m_pRenderTargetView			= NULL;	
 	m_pDepthStencilView			= NULL;	
+
+	m_pDepthStencilState = NULL;
+	m_pRasterizerState = NULL;
 	
 	m_pBasicEffect						= NULL;
 	m_pWorldMatrixEffectVariable		= NULL;
 	m_pProjectionMatrixEffectVariable	= NULL;
 	m_pViewMatrixEffectVariable			= NULL;
+
+	memset(m_pVertexBuffers, NULL, sizeof(ID3D10Buffer*) * VBT_COUNT);	
+	m_pIndexBuffer	= NULL;
+
+	currentVBPos = 0;
+	currentIBPos = 0;
 	
 	D3DXMatrixIdentity(&m_matWorld);
 	D3DXMatrixIdentity(&m_matView);
@@ -70,17 +79,23 @@ CDX10Core::~CDX10Core( void )
 }
 
 void CDX10Core::CleanupDevice()
-{
-
-	SAFE_DX_RELEASE( m_pRenderTargetView )
-	SAFE_DX_RELEASE( m_pDepthStencilView );	
+{	
 
 	SAFE_DX_RELEASE( m_pFont );
 
-	SAFE_DX_RELEASE( m_pSwapChain )			
-	SAFE_DX_RELEASE( m_pDevice ) 
+	SAFE_DX_RELEASE( m_pBasicEffect);
 
-	SAFE_DX_RELEASE( m_pBasicEffect)
+	SAFE_DX_RELEASE( m_pRenderTargetView );
+	SAFE_DX_RELEASE( m_pDepthStencilView );
+	
+	for(int i = 0; i < VBT_COUNT; ++i)
+	{
+		SAFE_DX_RELEASE( m_pVertexBuffers[i] );
+	}
+	SAFE_DX_RELEASE( m_pIndexBuffer );
+
+	SAFE_DX_RELEASE( m_pSwapChain );		
+	SAFE_DX_RELEASE( m_pDevice );
 }
 
 void CDX10Core::ResetDevice()
@@ -192,9 +207,12 @@ bool CDX10Core::Init( HWND hWnd )
 
 	InitMatrices(vp.Width, vp.Height);
 
+	InitRasterizerState();
 	InitDepthStencilState();
 
 	InitBasicEffects();
+
+	InitializeBuffers();
 
 	InitFont();
 
@@ -245,8 +263,14 @@ bool CDX10Core::Init( HWND hWnd, const DXInitDesc &initDesc )
 	m_pDevice->RSSetViewports( 1, &vp );
 
 	InitMatrices(vp.Width, vp.Height);
-	
+
+	InitRasterizerState();
+
 	InitDepthStencilState();
+
+	InitBasicEffects();
+
+	InitializeBuffers();
 
 	InitFont();
 
@@ -298,33 +322,6 @@ void CDX10Core::InitDepthStencilState()
 
 void CDX10Core::InitRasterizerState()
 {	
-}
-
-void CDX10Core::BeginDraw()
-{
-	// Just clear the backbuffer
-	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 0.5f }; //red,green,blue,alpha
-	m_pDevice->ClearRenderTargetView( m_pRenderTargetView, D3DXCOLOR(0xffffffff) );			
-	m_pDevice->ClearDepthStencilView( m_pDepthStencilView, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 1.0f, 0 );
-}
-
-void CDX10Core::EndDraw()
-{	
-	HR( m_pSwapChain->Present( 1, 0 ) );
-}
-
-struct CColorVertex
-{
-	D3DXVECTOR3 position;	
-	D3DXCOLOR color;
-	bool operator == (const CColorVertex &vertex)
-	{
-		return position == vertex.position && color == vertex.color;
-	}	
-};
-
-void CDX10Core::SetRasterizerState()
-{
 	D3D10_RASTERIZER_DESC rasterizerState;
 	rasterizerState.CullMode = D3D10_CULL_BACK;
 	rasterizerState.FillMode = D3D10_FILL_SOLID;
@@ -337,9 +334,136 @@ void CDX10Core::SetRasterizerState()
 	rasterizerState.MultisampleEnable = false;
 	rasterizerState.AntialiasedLineEnable = true;
 
-	ID3D10RasterizerState* pRS;
-	m_pDevice->CreateRasterizerState( &rasterizerState, &pRS);
-	m_pDevice->RSSetState(pRS);
+	m_pDevice->CreateRasterizerState( &rasterizerState, &m_pRasterizerState);
+}
+
+void CDX10Core::BeginDraw()
+{
+	// Just clear the backbuffer
+	float fClearColor[4] = { 0.0f, 0.125f, 0.3f, 0.5f }; //red,green,blue,alpha
+	m_pDevice->ClearRenderTargetView( m_pRenderTargetView, D3DXCOLOR(0xffffffff) );			
+	m_pDevice->ClearDepthStencilView( m_pDepthStencilView, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 1.0f, 0 );
+}
+
+void CDX10Core::EndDraw()
+{	
+	HR( m_pSwapChain->Present( 0, 0 ) );
+}
+
+void CDX10Core::SetWireframe(bool bWireframe)
+{
+	D3D10_RASTERIZER_DESC rasterizerStateDesc;
+	m_pRasterizerState->GetDesc(&rasterizerStateDesc);
+	rasterizerStateDesc.FillMode = bWireframe ? D3D10_FILL_WIREFRAME: D3D10_FILL_SOLID;
+		
+	SAFE_DX_RELEASE(m_pRasterizerState);
+	m_pDevice->CreateRasterizerState( &rasterizerStateDesc, &m_pRasterizerState);	
+}
+
+void CDX10Core::ApplyRasterizerState()
+{
+	m_pDevice->RSSetState(m_pRasterizerState);
+}
+
+struct Vertex
+{
+	D3DXVECTOR3 pos;
+	D3DXVECTOR4 color;
+
+	Vertex( D3DXVECTOR3 p, D3DXVECTOR4 c ) : pos(p), color(c) {}
+};
+
+void CDX10Core::InitializeBuffers()
+{
+	D3D10_INPUT_ELEMENT_DESC layout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT,1, 0, D3D10_INPUT_PER_VERTEX_DATA, 0 }
+	};
+
+	const UINT maxNumVertices = 150000;
+
+	UINT numElements = 2;
+	D3D10_PASS_DESC passDesc = {0};
+	m_pBasicTechnique->GetPassByIndex( 0 )->GetDesc( &passDesc );
+
+	m_pVertexLayout = NULL;
+	if ( FAILED( m_pDevice->CreateInputLayout( layout,
+		numElements,
+		passDesc.pIAInputSignature,
+		passDesc.IAInputSignatureSize,
+		&m_pVertexLayout ) ) ) 
+	{
+		MessageBox(m_hWnd, _T("Error creating input layout"), _T("DX render error"), MB_OK);
+		return;
+	}
+	
+	//create vertex buffer
+	//---------------------------------------------
+	D3D10_BUFFER_DESC bd;
+	bd.Usage = D3D10_USAGE_DYNAMIC;
+	bd.ByteWidth = sizeof( D3DXVECTOR3 ) * maxNumVertices; //total size of buffer in bytes
+	bd.BindFlags = D3D10_BIND_VERTEX_BUFFER;
+	bd.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+	bd.MiscFlags = 0;
+
+	if ( FAILED( m_pDevice->CreateBuffer( &bd, NULL, &m_pVertexBuffers[VBT_POSITION1] ) ) ) 
+	{
+		MessageBox(m_hWnd, _T("Could not create vertex buffer!"), _T("DX render error"), MB_OK);
+		return;
+	}
+	
+	bd.ByteWidth = sizeof( D3DXVECTOR4 ) * maxNumVertices; //total size of buffer in bytes
+	if ( FAILED( m_pDevice->CreateBuffer( &bd, NULL, &m_pVertexBuffers[VBT_COLOR1] ) ) ) 
+	{
+		MessageBox(m_hWnd, _T("Could not create vertex buffer!"), _T("DX render error"), MB_OK);
+		return;
+	}
+
+	D3DXVECTOR4 *v = NULL;
+	m_pVertexBuffers[VBT_COLOR1]->Map(D3D10_MAP_WRITE_DISCARD, 0, (void **)&v );
+	for(UINT i = 0; i < maxNumVertices; ++i)
+	{		
+		v[i] = D3DXVECTOR4(0,0, 1, 1);
+	}
+	m_pVertexBuffers[VBT_COLOR1]->Unmap();	
+
+	//create index buffer
+	//---------------------------------------------	
+	//UINT numIndices = pObj->m_pMesh->m_numIndices;
+	bd.ByteWidth = sizeof( UINT ) * maxNumVertices; //total size of buffer in bytes
+	bd.BindFlags = D3D10_BIND_INDEX_BUFFER;
+	if ( FAILED( m_pDevice->CreateBuffer( &bd, NULL, &m_pIndexBuffer ) ) ) 
+	{
+		MessageBox(m_hWnd, _T("Could not create index buffer!"), _T("DX render error"), MB_OK);
+	}
+
+	currentIBPos = 0;
+	currentVBPos = 0;
+}
+
+void CDX10Core::FillBuffers(CMeshObject *pObj)
+{
+
+	UINT numVertices = pObj->m_pMesh->m_numVertices;
+	UINT numIndices = pObj->m_pMesh->m_numIndices;
+
+	//fill vertex buffers with vertex data
+	void* v = NULL;
+
+	//lock vertex buffer for CPU use
+	m_pVertexBuffers[VBT_POSITION1]->Map(D3D10_MAP_WRITE_DISCARD, 0, &v );
+	memcpy(v, pObj->m_pMesh->m_pVertices, sizeof(D3DXVECTOR3) * numVertices);
+	m_pVertexBuffers[VBT_POSITION1]->Unmap();
+	
+	//fill vertex buffer with vertices
+	UINT* indices = NULL;
+
+	//lock index buffer for CPU use	
+	m_pIndexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**) &indices );
+	memcpy(indices, pObj->m_pMesh->m_pIndices, sizeof(UINT) * numIndices);
+	m_pIndexBuffer->Unmap();
+
 }
 
 void CDX10Core::RenderMeshObject(CMeshObject *pObj, float dt)
@@ -349,122 +473,36 @@ void CDX10Core::RenderMeshObject(CMeshObject *pObj, float dt)
 	if(!pObj || !pObj->m_pMesh || !pObj->m_pMesh->m_numVertices)
 		return;
 
-	struct Vertex
-	{
-		D3DXVECTOR3 pos;
-		D3DXVECTOR4 color;
-
-		Vertex( D3DXVECTOR3 p, D3DXVECTOR4 c ) : pos(p), color(c) {}
-	};
-
-	D3D10_INPUT_ELEMENT_DESC layout[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT,0, 0, D3D10_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT,0, 12, D3D10_INPUT_PER_VERTEX_DATA, 0 }
-	};
-
-	UINT numElements = 2;
-	D3D10_PASS_DESC passDesc = {0};
-	m_pBasicTechnique->GetPassByIndex( 0 )->GetDesc( &passDesc );
-
-	ID3D10InputLayout *pVertexLayout = NULL;
-	if ( FAILED( m_pDevice->CreateInputLayout( layout,
-		numElements,
-		passDesc.pIAInputSignature,
-		passDesc.IAInputSignatureSize,
-		&pVertexLayout ) ) ) 
-	{
-		MessageBox(m_hWnd, _T("Error creating input layout"), _T("DX render error"), MB_OK);
-		return;
-	}
-
-	// Set the input layout
-	m_pDevice->IASetInputLayout( pVertexLayout );
-
-	//create vertex buffer
-	//---------------------------------------------
-
-	UINT numVertices = pObj->m_pMesh->m_numVertices;
-
-	D3D10_BUFFER_DESC bd;
-	bd.Usage = D3D10_USAGE_DYNAMIC;
-	bd.ByteWidth = sizeof( Vertex ) * numVertices; //total size of buffer in bytes
-	bd.BindFlags = D3D10_BIND_VERTEX_BUFFER;
-	bd.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
-	bd.MiscFlags = 0;
-
-	ID3D10Buffer *pVertexBuffer = NULL;
-	HRESULT hresult = S_OK;
-	if ( FAILED( hresult = m_pDevice->CreateBuffer( &bd, NULL, &pVertexBuffer ) ) ) 
-	{
-		MessageBox(m_hWnd, _T("Could not create vertex buffer!"), _T("DX render error"), MB_OK);
-		return;
-	}
-
-	// Set vertex buffer
-	UINT stride = sizeof( Vertex );
-	UINT offset = 0;
-	m_pDevice->IASetVertexBuffers( 0, 1, &pVertexBuffer, &stride, &offset );
-
-	//fill vertex buffer with vertices
-	Vertex* v = NULL;
-
-	//lock vertex buffer for CPU use
-	pVertexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**) &v );
-
-	for(UINT i = 0; i < numVertices; ++i)
-	{
-		v[i] = Vertex( D3DXVECTOR3((float *)(void *)pObj->m_pMesh->m_pVertices[i]), D3DXVECTOR4(0.2f, 0.3f , 0.7f, 1 ));
-	}	
-
-	pVertexBuffer->Unmap();
-
-
-	//create index buffer
-	//---------------------------------------------
-	ID3D10Buffer *pIndexBuffer = NULL;
-	UINT numIndices = pObj->m_pMesh->m_numIndices;
-	bd.ByteWidth = sizeof( UINT ) * numIndices; //total size of buffer in bytes
-	bd.BindFlags = D3D10_BIND_INDEX_BUFFER;
-	if ( FAILED( hresult = m_pDevice->CreateBuffer( &bd, NULL, &pIndexBuffer ) ) ) 
-	{
-		MessageBox(m_hWnd, _T("Could not create index buffer!"), _T("DX render error"), MB_OK);
-	}
-
-	// Set index buffer	
-	m_pDevice->IASetIndexBuffer(pIndexBuffer, DXGI_FORMAT_R32_UINT, 0 );
-
-	//fill vertex buffer with vertices
-	UINT* indices = NULL;
-
-	//lock index buffer for CPU use
-	pIndexBuffer->Map(D3D10_MAP_WRITE_DISCARD, 0, (void**) &indices );
-
-	for(UINT i = 0; i < numIndices; ++i)
-	{
-		indices[i] = pObj->m_pMesh->m_pIndices[i];
-	}	
-	pIndexBuffer->Unmap();
-
-	// Set primitive topology 
-	m_pDevice->IASetPrimitiveTopology( D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST );
+	FillBuffers(pObj);	
 
 	D3DXMATRIX rotMatY, rotMatX, translate;
-	D3DXMatrixRotationY(&rotMatY, 0.01 * 3.1416 * timeSpent);
-	D3DXMatrixRotationX(&rotMatX,  0.3416 );
-	D3DXMatrixTranslation(&translate, 0, 0, 20);
-	m_matWorld = D3DXMATRIX((float *)pObj->m_matGlobal) * rotMatX * rotMatY * translate ;
-	
-
-	SetRasterizerState();
-
-	//get technique desc
-	D3D10_TECHNIQUE_DESC techDesc;
-	m_pBasicTechnique->GetDesc( &techDesc );
+	D3DXMatrixRotationY(&rotMatY, 0.01f * 3.1416f * timeSpent);
+	D3DXMatrixRotationX(&rotMatX,  0.3416f );
+	D3DXMatrixTranslation(&translate, 0, 0, 130);
+	m_matWorld = D3DXMATRIX((float *)pObj->m_matGlobal) * rotMatX * rotMatY * translate ;	
 
 	m_pWorldMatrixEffectVariable->SetMatrix(m_matWorld);
 	m_pViewMatrixEffectVariable->SetMatrix(m_matView);
 	m_pProjectionMatrixEffectVariable->SetMatrix(m_matProjection);
+
+	// Set the input layout
+	m_pDevice->IASetInputLayout( m_pVertexLayout );
+
+	ID3D10Buffer * pVBs[]={ m_pVertexBuffers[VBT_POSITION1], m_pVertexBuffers[VBT_COLOR1]};
+	UINT strides[] = {sizeof(D3DXVECTOR3), sizeof(D3DXVECTOR4)};
+	UINT offsets[] = {0, 0};
+	m_pDevice->IASetVertexBuffers( 0, 2, pVBs, strides, offsets );
+
+	// Set index buffer	
+	m_pDevice->IASetIndexBuffer(m_pIndexBuffer, DXGI_FORMAT_R32_UINT, 0 );
+
+	// Set primitive topology 
+	m_pDevice->IASetPrimitiveTopology( D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST );	
+
+
+	//get technique desc
+	D3D10_TECHNIQUE_DESC techDesc;
+	m_pBasicTechnique->GetDesc( &techDesc );
 
 	for( UINT p = 0; p < techDesc.Passes; ++p )
 	{
@@ -472,10 +510,8 @@ void CDX10Core::RenderMeshObject(CMeshObject *pObj, float dt)
 		m_pBasicTechnique->GetPassByIndex( p )->Apply( 0 );
 
 		//draw
-		m_pDevice->DrawIndexed( numIndices, 0, 0 );
-	}
-	pVertexBuffer->Release();
-	pIndexBuffer->Release();
+		m_pDevice->DrawIndexed( pObj->m_pMesh->m_numIndices, 0, 0 );
+	}	
 }
 
 void CDX10Core::Render( CObject *pObject, float dt )

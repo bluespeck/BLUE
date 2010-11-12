@@ -102,8 +102,14 @@ void CEngine::Render(float dt)
 {
 	pCore->BeginDraw();
 	
+	pCore->SetWireframe(true);
+	pCore->ApplyRasterizerState();
+
 	RecursiveRender(m_pSceneRoot, dt );	
 	
+	pCore->SetWireframe(false);
+	pCore->ApplyRasterizerState();
+
 	OutputText( m_szEngineInfo, 5, 5, 0xff000000 );
 	
 	pCore->EndDraw();

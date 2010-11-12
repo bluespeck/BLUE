@@ -48,6 +48,9 @@ public:
 	virtual void EndDraw() = 0;	
 	
 	virtual void OutputText( const TCHAR *text, float left, float top, DWORD color ) = 0;
+
+	virtual void ApplyRasterizerState() = 0;
+	virtual void SetWireframe(bool bWireframe) = 0;
 protected:
 	
 	
