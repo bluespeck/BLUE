@@ -1,9 +1,5 @@
 #include "stdafx.h"
 
-#include "assimp.h"
-#include "aiPostProcess.h"
-#include "aiScene.h"
-
 #include "Engine.h"
 
 #ifdef BLUE_DX11
@@ -49,39 +45,16 @@ CEngine::CEngine(void)
 
 	m_bMinimized = false;
 	m_timer.Reset();
-	m_pSceneRoot = new CObject();
-	m_pSceneRoot->SetName(_T("scene_root"));	
+
+	m_pScene = new CScene();
 
 	_tcscpy_s(m_szEngineInfo, _T("FPS: 0"));
-}
-
-void CEngine::RecursiveDeleteObjects(CObject *pObj)
-{
-	if(pObj)
-	{
-		// delete children
-		if(pObj->m_pChild)
-		{
-			CObject *pBrother = pObj->m_pChild;
-			while(pBrother)
-			{
-				CObject *pNextBrother = pBrother->m_pNextBrother;
-				RecursiveDeleteObjects(pBrother);
-				pBrother = pNextBrother;
-			}
-		}
-		// delete current object
-		delete pObj;
-	}
 }
 
 CEngine::~CEngine(void)
 {
 	pCore->DestroyInstace();
-	if(m_pSceneRoot)
-	{
-		RecursiveDeleteObjects(m_pSceneRoot);
-	}
+	delete m_pScene;
 }
 
 bool CEngine::Init(HWND hwnd)
@@ -89,23 +62,14 @@ bool CEngine::Init(HWND hwnd)
 	return pCore->Init(hwnd);
 }
 
-void CEngine::RecursiveUpdate(CObject *pObject, float dt)
+void CEngine::Update(float dt)
 {
-	for(UINT i = 0, s = pObject->m_pControllers.size(); i < s; ++i)
-		pObject->m_pControllers[i]->Update(dt);
-	// recursively update all children
-	CObject *pObj = pObject->m_pChild;
-	while(pObj)
-	{
-		RecursiveUpdate(pObj, dt);
-		pObj = pObj->m_pNextBrother;
-	}
+	ComputeFPS( dt );
+	m_pScene->Update(dt);
 }
 
 void CEngine::RecursiveRender(CObject *pObject, float dt)
 {
-	//for(UINT i = 0, s = pObject->m_pControllers.size(); i < s; ++i)
-	//	pObject->m_pControllers[i]->Update(dt);
 	pCore->Render( pObject, dt );
 	// recursively update all children
 	CObject *pObj = pObject->m_pChild;
@@ -116,11 +80,6 @@ void CEngine::RecursiveRender(CObject *pObject, float dt)
 	}
 }
 
-void CEngine::Update(float dt)
-{
-	ComputeFPS( dt );
-	RecursiveUpdate(m_pSceneRoot, dt);
-}
 
 void CEngine::Render(float dt)
 {
@@ -129,7 +88,7 @@ void CEngine::Render(float dt)
 	pCore->SetWireframe(false);
 	pCore->ApplyRasterizerState();
 
-	RecursiveRender(m_pSceneRoot, dt );	
+	RecursiveRender(m_pScene->GetRootObject(), dt);
 	
 	pCore->SetWireframe(false);
 	pCore->ApplyRasterizerState();
@@ -190,34 +149,12 @@ bool CEngine::IsPaused()
 	return m_timer.IsPaused();
 }
 
-CObject *CEngine::RecursiveFindObject( CObject *pObj, const TCHAR *szName )
-{
-	if(pObj == NULL)
-		return NULL;
-	
-	if( 0 == _tcscmp( pObj->GetName(), szName ) )
-	{
-		return pObj;
-	}
-	else
-	{
-		CObject *pFound = NULL;
-		for( CObject *p = pObj->m_pChild; p != NULL; p = p->m_pNextBrother )
-		{
-			pFound = RecursiveFindObject( p, szName );
-			if( pFound != NULL )
-				return pFound;
-		}
-		return NULL;
-	}
-}
-
 CObject *CEngine::FindObject( const TCHAR *szName )
 {
-	if( szName == NULL || !*szName || m_pSceneRoot->GetName() == NULL )
+	if( szName == NULL || !*szName )
 		return NULL;
 
-	return RecursiveFindObject( m_pSceneRoot, szName );
+	return m_pScene->FindObject( szName );
 }
 
 void CEngine::OnResize(int width, int height)
@@ -231,169 +168,9 @@ void CEngine::SetMinimized(bool bMinimized)
 	m_bMinimized = bMinimized;
 }
 
-CMeshObject *CEngine::RecursiveLoadMeshObjectFromFile(const aiScene* pScene, const aiNode* pNode)
-{
-	CMeshObject *pObj = new CMeshObject();
-
-	memcpy(pObj->m_matLocal.mat, &pNode->mTransformation, sizeof(pObj->m_matLocal));
-
-	pObj->m_pMesh = new CMesh;	
-	pObj->m_pMesh->SetHasNormals(false);
-	for (UINT i = 0; i < pNode->mNumMeshes; ++i)
-	{
-		const aiMesh* pMesh = pScene->mMeshes[pNode->mMeshes[i]];
-		if(pMesh->HasNormals())
-			pObj->m_pMesh->SetHasNormals(true);
-		pObj->m_pMesh->m_numVertices += pMesh->mNumVertices;
-		pObj->m_pMesh->m_numIndices += pMesh->mNumFaces * 3;	// only for triangles
-	}
-
-	if(pObj->m_pMesh->m_numVertices)
-	{
-		// No materials for now
-		pObj->m_pMesh->SetHasMaterials(false);
-		pObj->m_pMesh->SetNumTexCoordsPerVertex(0);
-		pObj->m_pMesh->InitMesh();
-
-		// copy vertex and index data from aimesh
-		BYTE *pCurrentMeshVertex	= (BYTE *)pObj->m_pMesh->m_pVertices;
-		BYTE *pCurrentMeshIndex		= (BYTE *)pObj->m_pMesh->m_pIndices;
-		for (UINT i = 0; i < pNode->mNumMeshes; ++i)
-		{
-			const aiMesh* pMesh = pScene->mMeshes[pNode->mMeshes[i]];
-			UINT bytesForVertices = pMesh->mNumVertices * sizeof(CVector3);		
-			memcpy(pCurrentMeshVertex, pMesh->mVertices, bytesForVertices);
-			if(pMesh->HasNormals())
-			{
-				BYTE *pCurrentMeshNormal = (BYTE *)pObj->m_pMesh->m_pNormals + (pCurrentMeshVertex - (BYTE *)pObj->m_pMesh->m_pVertices);
-				UINT bytesForNormals = bytesForVertices;
-				memcpy(pCurrentMeshNormal, pMesh->mNormals, bytesForNormals);
-			}			
-			if(pMesh->HasNormals())
-			pCurrentMeshVertex += bytesForVertices;
-			for(UINT faceIndex = 0; faceIndex < pMesh->mNumFaces; ++faceIndex)
-			{
-				UINT bytesForIndices = pMesh->mFaces[faceIndex].mNumIndices * sizeof(UINT);
-				memcpy(pCurrentMeshIndex, pMesh->mFaces[faceIndex].mIndices, bytesForIndices);
-				pCurrentMeshIndex += bytesForIndices;
-			}
-		}
-	}
-
-	if(pNode->mNumChildren > 0)
-	{
-		pObj->m_pChild = RecursiveLoadMeshObjectFromFile(pScene, pNode->mChildren[0]);
-		CObject *pLastBrother = pObj->m_pChild;
-		pLastBrother->m_pParent = pObj;
-		for (UINT i = 1; i < pNode->mNumChildren; ++i)
-		{			
-			pLastBrother->m_pNextBrother = RecursiveLoadMeshObjectFromFile(pScene, pNode->mChildren[i]);
-			pLastBrother = pLastBrother->m_pNextBrother;
-			pLastBrother->m_pParent = pObj;
-		}
-	}
-	return pObj;
-}
-
-CObject *CEngine::LoadMeshObjectFromFile(const TCHAR *path)
-{	
-	const aiScene* pScene = NULL;
-	aiSetImportPropertyInteger("AI_CONFIG_PP_SBP_REMOVE", aiPrimitiveType_POINT | aiPrimitiveType_LINE );
-	UINT importFlag = aiProcess_Triangulate
-		| aiProcess_SortByPType
-		| aiProcess_ConvertToLeftHanded
-		//| aiProcess_FlipWindingOrder
-		;
-#ifdef UNICODE
-	char szPath[MAX_PATH]={0};
-	wcstombs(szPath, path, MAX_PATH);
-	szPath[MAX_PATH - 1] = 0;
-
-	pScene = aiImportFile(szPath, importFlag);
-#else
-	pScene = aiImportFile(path, importFlag);
-#endif
-	
-	if(pScene)
-	{
-		CMeshObject *pNewObject = RecursiveLoadMeshObjectFromFile(pScene, pScene->mRootNode);
-		aiReleaseImport(pScene);
-		return pNewObject;
-	}
-	else
-	{
-		aiReleaseImport(pScene);
-		return NULL;
-	}
-}
-
 bool CEngine::LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName, ObjectType objType, const TCHAR *path)
 {
-	CObject *pNewObject = NULL;
-	switch(objType)
-	{
-	case OT_BASIC:
-		// ignore path for basic objects for now; also ignore objects with no name
-		{
-			pNewObject = new CObject();
-			if(szName && *szName)
-				pNewObject->SetName(szName);
-			if(!szParentName || !*szParentName)
-				pNewObject->m_pParent = m_pSceneRoot;
-			else
-				pNewObject->m_pParent = FindObject(szParentName);
-			if(!m_pSceneRoot->m_pChild)
-				m_pSceneRoot->m_pChild = pNewObject;
-			else
-			{
-				CObject *pLastBrother = m_pSceneRoot->m_pChild;
-				while(pLastBrother->m_pNextBrother)
-					pLastBrother = pLastBrother->m_pNextBrother;
-				pLastBrother->m_pNextBrother = pNewObject;
-			}
-			return true;
-		}		
-		break;
-	case OT_MESH:
-		// load a mesh object
-		{
-			CObject *pNewObject = LoadMeshObjectFromFile(path);
-			if(pNewObject)
-			{
-				if(!szParentName || !*szParentName)
-					pNewObject->m_pParent = m_pSceneRoot;
-				else
-				{
-					pNewObject->m_pParent = FindObject(szParentName);
-				}
-				if(!m_pSceneRoot->m_pChild)
-					m_pSceneRoot->m_pChild = pNewObject;
-				else
-				{
-					CObject *pLastBrother = m_pSceneRoot->m_pChild;
-					while(pLastBrother->m_pNextBrother)
-						pLastBrother = pLastBrother->m_pNextBrother;
-					pLastBrother->m_pNextBrother = pNewObject;
-				}
-			}
-			return true;
-		}
-		break;
-	case OT_POINT:
-		// load a point based object
-		{
-			return true;
-		}
-		break;
-	case OT_VOLUMETRIC:
-		// load a volumetric object
-		{
-			return true;
-		}
-		break;
-	}
-
-	return false;
+	return m_pScene->LoadObjectFromFile(szName, szParentName, objType, path);
 }
 
 }// end namespace BLUE

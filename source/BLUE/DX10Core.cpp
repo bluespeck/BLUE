@@ -358,7 +358,7 @@ void CDX10Core::BeginDraw()
 
 void CDX10Core::EndDraw()
 {	
-	HR( m_pSwapChain->Present( 0, 0 ) );
+	HR( m_pSwapChain->Present( 1, 0 ) );
 }
 
 void CDX10Core::SetWireframe(bool bWireframe)

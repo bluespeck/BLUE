@@ -328,6 +328,14 @@
 			RelativePath=".\readme.txt"
 			>
 		</File>
+		<File
+			RelativePath=".\Scene.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\Scene.h"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

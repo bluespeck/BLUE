@@ -7,8 +7,7 @@
 	#include "DXCore.h"
 #endif
 
-#include "Object.h"
-#include "MeshObject.h"
+#include "Scene.h"
 #include "Timer.h"
 #include "EngineUtils.h"
 
@@ -40,18 +39,15 @@ public:
 	void			OutputText( const TCHAR *text, float left, float top, DWORD color );
 	
 protected:
-	CObject		*	LoadMeshObjectFromFile(const TCHAR *path);
-	CObject		*	RecursiveFindObject(CObject *pObj, const TCHAR *szName);
+	CObject		*	LoadMeshObjectFromFile(const TCHAR *path);	
 	CMeshObject *	RecursiveLoadMeshObjectFromFile(const struct aiScene* pScene, const struct aiNode* pNode);
 
-	void			RecursiveUpdate(CObject *pObj, float dt);
 	void			RecursiveRender(CObject *pObj, float dt);
 
 	void			Render(float dt);
 	void			Update(float dt);
 
 	void			ComputeFPS(float dt);
-	void			RecursiveDeleteObjects(CObject *pObj);
 
 					CEngine(void);
 					virtual ~CEngine(void);
@@ -65,12 +61,11 @@ protected:
 #endif
 
 	CTimer					m_timer;
-	
-	CObject				*	m_pSceneRoot;
-
 
 	TCHAR					m_szEngineInfo[MAX_STRING_LENGTH];
 	bool					m_bMinimized;	
+
+	CScene				*	m_pScene;
 
 };
 
