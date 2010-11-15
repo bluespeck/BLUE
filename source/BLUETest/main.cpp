@@ -23,7 +23,7 @@ int WINAPI WinMain( HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLin
 	
 	pAppWindow->Bind3DEngine( pEngine );
 	pEngine->LoadObjectFromFile(L"myObj1", NULL, BLUE::OT_MESH, L"D:\\test\\models\\3ds\\jeep1.3ds");
-	for(int i = 0; i < 10; i++)
+	//for(int i = 0; i < 10; i++)
 	{
 		pEngine->LoadObjectFromFile(L"myObj2", NULL, BLUE::OT_MESH, L"D:\\test\\models\\3ds\\pyramob.3ds");
 	}
