@@ -18,7 +18,7 @@ public:
 	void SetNumVertices(UINT numVertices);
 	void SetHasNormals(bool bHasNormals);
 	void SetNumTexCoordsPerVertex(UINT numTexCoordsPerVertex);
-	void SetHasMaterials(bool bHasMaterials);
+	void SetNumMaterials(UINT numMaterials);
 	
 	// Allocates memory for all the buffers inside this mesh
 	void InitMesh();
@@ -29,13 +29,15 @@ public:
 	CVector3	*m_pTexCoords[BLUE_MAX_TEXTURE_COORDS];
 
 	UINT		*m_pIndices;
-	CMaterial	*m_pMaterials;
+	UINT		*m_pMaterials;
+	UINT		*m_pMaterialRanges;		// {mat(1)_start, mat(2)_start, ... mat(m_numMaterials)_start}
 
 	bool		m_bHasNormals;
-	bool		m_bHasMaterials;
+
 	UINT		m_numVertices;
 	UINT		m_numIndices;
 	UINT		m_numTexCoordsPerVertex;	
+	UINT		m_numMaterials;
 };
 
 }// end namespace BLUE

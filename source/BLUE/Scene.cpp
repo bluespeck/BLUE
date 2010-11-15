@@ -18,6 +18,8 @@ CScene::CScene(void)
 {
 	m_pRootObj = new CObject();
 	m_pRootObj->SetName(_T("scene_root"));	
+	
+	m_lastMaterialIndex = 0;
 }
 
 CScene::~CScene(void)
@@ -25,6 +27,12 @@ CScene::~CScene(void)
 	if(m_pRootObj)
 	{
 		RecursiveDeleteObjects(m_pRootObj);
+	}
+
+	for(UINT i = 0; i < m_vecMaterials.size(); ++i)
+	{
+		if(m_vecMaterials[i])
+			delete m_vecMaterials[i];
 	}
 }
 
@@ -93,25 +101,33 @@ CMeshObject *CScene::RecursiveLoadMeshObjectFromFile(const aiScene* pScene, cons
 		const aiMesh* pMesh = pScene->mMeshes[pNode->mMeshes[i]];
 		if(pMesh->HasNormals())
 			pObj->m_pMesh->SetHasNormals(true);
+		
 		pObj->m_pMesh->m_numVertices += pMesh->mNumVertices;
 		pObj->m_pMesh->m_numIndices += pMesh->mNumFaces * 3;	// only for triangles
 	}
 
 	if(pObj->m_pMesh->m_numVertices)
 	{
-		// No materials for now
-		pObj->m_pMesh->SetHasMaterials(false);
 		pObj->m_pMesh->SetNumTexCoordsPerVertex(0);
+		if(pScene->HasMaterials())
+		{
+			pObj->m_pMesh->m_numMaterials = pNode->mNumMeshes;
+		}
 		pObj->m_pMesh->InitMesh();
 
 		// copy vertex and index data from aimesh
 		BYTE *pCurrentMeshVertex	= (BYTE *)pObj->m_pMesh->m_pVertices;
 		BYTE *pCurrentMeshIndex		= (BYTE *)pObj->m_pMesh->m_pIndices;
+		UINT vertexIndexForCurrentMaterial = 0;
 		for (UINT i = 0; i < pNode->mNumMeshes; ++i)
 		{
 			const aiMesh* pMesh = pScene->mMeshes[pNode->mMeshes[i]];
+
+			// load vertices for this submesh
 			UINT bytesForVertices = pMesh->mNumVertices * sizeof(CVector3);		
 			memcpy(pCurrentMeshVertex, pMesh->mVertices, bytesForVertices);
+
+			// load normals for this submesh
 			if(pMesh->HasNormals())
 			{
 				BYTE *pCurrentMeshNormal = (BYTE *)pObj->m_pMesh->m_pNormals + (pCurrentMeshVertex - (BYTE *)pObj->m_pMesh->m_pVertices);
@@ -120,12 +136,23 @@ CMeshObject *CScene::RecursiveLoadMeshObjectFromFile(const aiScene* pScene, cons
 			}			
 			if(pMesh->HasNormals())
 				pCurrentMeshVertex += bytesForVertices;
-			for(UINT faceIndex = 0; faceIndex < pMesh->mNumFaces; ++faceIndex)
+
+			if(pScene->HasMaterials())
+			{
+				// load material reference for this submesh
+				pObj->m_pMesh->m_pMaterials[i] = pMesh->mMaterialIndex + m_lastMaterialIndex;
+				pObj->m_pMesh->m_pMaterialRanges[i] = vertexIndexForCurrentMaterial;
+				vertexIndexForCurrentMaterial += pMesh->mNumVertices;
+			}
+
+			// load indices for this submesh
+			for(register UINT faceIndex = 0; faceIndex < pMesh->mNumFaces; ++faceIndex)
 			{
 				UINT bytesForIndices = pMesh->mFaces[faceIndex].mNumIndices * sizeof(UINT);
 				memcpy(pCurrentMeshIndex, pMesh->mFaces[faceIndex].mIndices, bytesForIndices);
 				pCurrentMeshIndex += bytesForIndices;
 			}
+			
 		}
 	}
 
@@ -134,7 +161,7 @@ CMeshObject *CScene::RecursiveLoadMeshObjectFromFile(const aiScene* pScene, cons
 		pObj->m_pChild = RecursiveLoadMeshObjectFromFile(pScene, pNode->mChildren[0]);
 		CObject *pLastBrother = pObj->m_pChild;
 		pLastBrother->m_pParent = pObj;
-		for (UINT i = 1; i < pNode->mNumChildren; ++i)
+		for (register UINT i = 1; i < pNode->mNumChildren; ++i)
 		{			
 			pLastBrother->m_pNextBrother = RecursiveLoadMeshObjectFromFile(pScene, pNode->mChildren[i]);
 			pLastBrother = pLastBrother->m_pNextBrother;
@@ -144,7 +171,7 @@ CMeshObject *CScene::RecursiveLoadMeshObjectFromFile(const aiScene* pScene, cons
 	return pObj;
 }
 
-CObject *CScene::LoadMeshObjectFromFile(const TCHAR *path)
+CObject *CScene::LoadMeshObjectsFromFile(const TCHAR *path)
 {	
 	const aiScene* pScene = NULL;
 	aiSetImportPropertyInteger("AI_CONFIG_PP_SBP_REMOVE", aiPrimitiveType_POINT | aiPrimitiveType_LINE );
@@ -166,6 +193,23 @@ CObject *CScene::LoadMeshObjectFromFile(const TCHAR *path)
 	if(pScene)
 	{
 		CMeshObject *pNewObject = RecursiveLoadMeshObjectFromFile(pScene, pScene->mRootNode);
+		// load materials if any
+		if( pScene->HasMaterials() )
+		{
+			UINT numMaterials = pScene->mNumMaterials;
+			m_vecMaterials.resize(m_lastMaterialIndex + numMaterials);
+			for(UINT i = 0; i < numMaterials; ++i)
+			{
+				const aiMaterial *pMaterial = pScene->mMaterials[i];	
+				CMaterial *pNewMaterial = new CMaterial();
+				aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_DIFFUSE, (aiColor4D *)(void *)&pNewMaterial->m_vDiffuse);
+				aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_AMBIENT, (aiColor4D *)(void *)&pNewMaterial->m_vAmbient);
+				aiGetMaterialColor(pMaterial, AI_MATKEY_COLOR_SPECULAR, (aiColor4D *)(void *)&pNewMaterial->m_vSpecular);
+				// TODO : add transparent, emissive, reflective colors too
+				m_vecMaterials[i + m_lastMaterialIndex] = pNewMaterial;
+			}
+			m_lastMaterialIndex += numMaterials;
+		}
 		aiReleaseImport(pScene);
 		return pNewObject;
 	}
@@ -207,7 +251,7 @@ bool CScene::LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName, 
 	case OT_MESH:
 		// load a mesh object
 		{
-			CObject *pNewObject = LoadMeshObjectFromFile(path);
+			CObject *pNewObject = LoadMeshObjectsFromFile(path);
 			if(pNewObject)
 			{
 				if(!szParentName || !*szParentName)

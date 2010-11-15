@@ -9,11 +9,12 @@ CMesh::CMesh(void)
 , m_pIndices(NULL)
 , m_pNormals(NULL)
 , m_pMaterials(NULL)
+, m_pMaterialRanges(NULL)
 , m_numIndices(0)
 , m_numVertices(0)
-, m_bHasNormals(false)
-, m_bHasMaterials(false)
 , m_numTexCoordsPerVertex(0)
+, m_bHasNormals(false)
+
 {
 	for(UINT i = 0; i < BLUE_MAX_TEXTURE_COORDS; ++i)
 	{
@@ -27,10 +28,12 @@ CMesh::~CMesh(void)
 		delete[] m_pVertices;
 	if(m_pIndices)
 		delete[] m_pIndices;
-	if(m_pMaterials)
-		delete[] m_pMaterials;
 	if(m_pNormals)
 		delete[] m_pNormals;
+	if(m_pMaterials)
+		delete[] m_pMaterials;
+	if(m_pMaterialRanges)
+		delete[] m_pMaterialRanges;
 	for(UINT i = 0; i < m_numTexCoordsPerVertex; ++i)
 		if(m_pTexCoords[i])
 			delete[] m_pTexCoords[i];
@@ -51,9 +54,9 @@ void CMesh::SetNumTexCoordsPerVertex(UINT numTexCoordsPerVertex)
 	m_numTexCoordsPerVertex = numTexCoordsPerVertex;
 }
 
-void CMesh::SetHasMaterials(bool bHasMaterials)
+void CMesh::SetNumMaterials(UINT numMaterials)
 {
-	m_bHasMaterials = bHasMaterials;
+	m_numMaterials = numMaterials;
 }
 
 // Allocates memory for all the buffers inside this mesh
@@ -71,10 +74,11 @@ void CMesh::InitMesh()
 		memset(m_pIndices, 0, m_numIndices * sizeof(UINT));
 	}
 	
-	if(m_bHasMaterials)
+	if(m_numMaterials)
 	{
-		// should keep a smaller vector of materials and indices to that vector for each vertex
-		m_pMaterials = NULL;//new CMaterial[m_numVertices];
+		m_pMaterials = new UINT[m_numMaterials];
+		m_pMaterialRanges = new UINT[m_numMaterials];
+		
 	}
 
 	if(m_bHasNormals)

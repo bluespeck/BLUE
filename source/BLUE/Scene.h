@@ -2,6 +2,7 @@
 
 #include "Object.h"
 #include "MeshObject.h"
+#include "Material.h"
 
 namespace BLUE
 {
@@ -16,7 +17,7 @@ public:
 	CObject *GetRootObject(){ return m_pRootObj; }
 	CObject *FindObject( const TCHAR *szName);
 
-	CObject *	LoadMeshObjectFromFile(const TCHAR *path);
+	CObject *	LoadMeshObjectsFromFile(const TCHAR *path);
 	
 	
 	bool		LoadObjectFromFile(const TCHAR *szName, const TCHAR *szParentName, ObjectType objType, const TCHAR *path);
@@ -29,6 +30,11 @@ protected:
 
 protected:
 	CObject				*	m_pRootObj;
+
+	std::vector<CMaterial *> m_vecMaterials;
+
+private:
+	UINT			m_lastMaterialIndex;	// internal use; used as an offset into the materials vector by meshes
 };
 
 } // end namespace BLUE

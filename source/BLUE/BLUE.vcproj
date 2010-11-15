@@ -160,10 +160,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Defines.h"
-				>
-			</File>
-			<File
 				RelativePath=".\Engine.cpp"
 				>
 			</File>
@@ -172,75 +168,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\EngineUtils.h"
-				>
-			</File>
-			<File
-				RelativePath=".\IController.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\IController.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Material.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Material.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Matrix4.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Matrix4.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Mesh.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Mesh.h"
-				>
-			</File>
-			<File
 				RelativePath=".\stdafx.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Timer.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Timer.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Vector2.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Vector2.h"
-				>
-			</File>
-			<File
-				RelativePath=".\Vector3.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Vector3.h"
-				>
-			</File>
-			<File
-				RelativePath=".\WindowInput.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\WindowInput.h"
 				>
 			</File>
 			<Filter
@@ -295,6 +223,110 @@
 					</File>
 				</Filter>
 			</Filter>
+			<Filter
+				Name="Math"
+				>
+				<File
+					RelativePath=".\Matrix4.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Matrix4.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Vector2.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Vector2.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Vector3.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Vector3.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Graphics"
+				>
+				<File
+					RelativePath=".\Color.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Material.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Material.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Mesh.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Mesh.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Scene.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Scene.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Misc"
+				>
+				<File
+					RelativePath=".\Defines.h"
+					>
+				</File>
+				<File
+					RelativePath=".\EngineUtils.h"
+					>
+				</File>
+				<File
+					RelativePath=".\IController.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\IController.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Process.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Process.h"
+					>
+				</File>
+				<File
+					RelativePath=".\Timer.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\Timer.h"
+					>
+				</File>
+				<File
+					RelativePath=".\WindowInput.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\WindowInput.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Objects"
@@ -325,15 +357,15 @@
 			</File>
 		</Filter>
 		<File
+			RelativePath=".\ProcessManager.cpp"
+			>
+		</File>
+		<File
+			RelativePath=".\ProcessManager.h"
+			>
+		</File>
+		<File
 			RelativePath=".\readme.txt"
-			>
-		</File>
-		<File
-			RelativePath=".\Scene.cpp"
-			>
-		</File>
-		<File
-			RelativePath=".\Scene.h"
 			>
 		</File>
 	</Files>
