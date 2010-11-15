@@ -42,6 +42,7 @@ protected:
 	CObject		*	LoadMeshObjectFromFile(const TCHAR *path);	
 	CMeshObject *	RecursiveLoadMeshObjectFromFile(const struct aiScene* pScene, const struct aiNode* pNode);
 
+	void			RecursiveUpdate(CObject *pObject, float dt);
 	void			RecursiveRender(CObject *pObj, float dt);
 
 	void			Render(float dt);

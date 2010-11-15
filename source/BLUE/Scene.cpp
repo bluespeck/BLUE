@@ -50,24 +50,6 @@ void CScene::RecursiveDeleteObjects(CObject *pObj)
 	}
 }
 
-void CScene::RecursiveUpdate(CObject *pObject, float dt)
-{
-	for(UINT i = 0, s = pObject->m_pControllers.size(); i < s; ++i)
-		pObject->m_pControllers[i]->Update(dt);
-	// recursively update all children
-	CObject *pObj = pObject->m_pChild;
-	while(pObj)
-	{
-		RecursiveUpdate(pObj, dt);
-		pObj = pObj->m_pNextBrother;
-	}
-}
-
-void CScene::Update(float dt)
-{
-	RecursiveUpdate(m_pRootObj, dt);
-}
-
 CObject *CScene::FindObject( const TCHAR *szName)
 {
 	if(szName)

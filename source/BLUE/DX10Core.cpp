@@ -119,6 +119,7 @@ void *CDX10Core::GetSwapChain()
 
 void CDX10Core::InitBasicEffects()
 {
+	ID3D10Blob*	pBlobErrors = NULL;
 	HRESULT hr = D3DX10CreateEffectFromFile( _T("effects/BasicShaders.fx"),
 		NULL, NULL,
 		"fx_4_0",
@@ -126,12 +127,24 @@ void CDX10Core::InitBasicEffects()
 		0, m_pDevice,
 		NULL, NULL,
 		&m_pBasicEffect,
-		NULL, NULL);
+		&pBlobErrors, NULL);
 	if ( FAILED ( hr ) )
 	{
-		MessageBox(m_hWnd, _T("Could not load effect file!"), _T("DirectX 10 shader Error"), MB_OK );
+		UINT size = pBlobErrors->GetBufferSize() + 1;
+		TCHAR *szError = new TCHAR[size];
+#ifdef UNICODE
+		char * pErrorString = (char *)pBlobErrors->GetBufferPointer();		
+		mbstowcs(szError, pErrorString, size);
+		szError[size - 1] = 0;
+#else
+		_tcscpy_s(szError, size, pBlobErrors->GetBufferPointer());
+#endif
+		MessageBox(m_hWnd, szError, _T("DirectX 10 shader Error"), MB_OK );
+		SAFE_DX_RELEASE(pBlobErrors);
+		delete[] szError;
 		exit(1);
 	}
+	SAFE_DX_RELEASE(pBlobErrors);
 
 	m_pBasicTechnique = m_pBasicEffect->GetTechniqueByName("BasicRender");
 	

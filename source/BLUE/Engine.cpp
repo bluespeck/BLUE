@@ -65,7 +65,20 @@ bool CEngine::Init(HWND hwnd)
 void CEngine::Update(float dt)
 {
 	ComputeFPS( dt );
-	m_pScene->Update(dt);
+	RecursiveUpdate(m_pScene->GetRootObject(), dt);
+}
+
+void CEngine::RecursiveUpdate(CObject *pObject, float dt)
+{
+	for(UINT i = 0, s = pObject->m_pControllers.size(); i < s; ++i)
+		pObject->m_pControllers[i]->Update(dt);
+	// recursively update all children
+	CObject *pObj = pObject->m_pChild;
+	while(pObj)
+	{
+		RecursiveUpdate(pObj, dt);
+		pObj = pObj->m_pNextBrother;
+	}
 }
 
 void CEngine::RecursiveRender(CObject *pObject, float dt)
